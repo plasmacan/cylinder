@@ -1,0 +1,107 @@
+name: code testing workflow
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-tests-${{github.ref}}-testing
+  cancel-in-progress: true
+
+jobs:
+  code_testing_job:
+    runs-on: ubuntu-latest
+    name: code testing job
+    steps:
+      - name: print context info
+        run: |
+          echo "github.event_name:" ${{github.event_name}}
+          echo "github.event.action:" ${{github.event.action}}
+          echo "github.actor:" ${{github.actor}}
+
+      - name: attempt checkout with PAT
+        # if we don't use a PAT, then the git push cannot trigger a push event
+        # if there is no push event, then the tests cannot run and auto-merge cannot happen
+        id: checkout_pat
+        uses: actions/checkout@v2
+        continue-on-error: true
+        with:
+          token: ${{ secrets.PAT }}
+
+      - name: fallback to checkout with GITHUB_TOKEN
+        if: steps.checkout_pat.outcome != 'success'
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          #python -m pip install --upgrade pip
+          pip install pip-tools
+          pip-compile requirements.in -q
+          pip install -r requirements.txt
+          sudo apt-get update -y
+          sudo apt-get install -y aspell
+
+      - name: pre-commit initial cleanup
+        # this will fix any problems it can which the developer left behind
+        # needs to run before pytest because it may break something
+        run: |
+          pre-commit run --all-files --hook-stage manual
+        continue-on-error: true
+
+      - name: test with pytest
+        run: |
+          pytest
+
+      - name: update shields
+        # relies on pytest having run so that the coverage database exists.
+        if: github.ref != 'refs/heads/main'
+        run: |
+          python .ci-tools/coverage_shield.py
+          python .ci-tools/quality_shield.py
+
+      - name: build docs
+        run: |
+          rm -rf docs
+          sphinx-build -W --keep-going -a -b dirhtml docs-src docs
+          touch docs/.nojekyll
+
+      - name: pre-commit final cleanup
+        # this will fix any formatting problems from output of pytest and .ci-tools/*
+        # needs to run after pytest and .ci-tools/* to clean up their output
+        run: |
+          pre-commit run --all-files --hook-stage manual
+        continue-on-error: true
+
+      - name: revert workflows
+        # changes to workflows cannot be committed by CI normally.
+        # revert those changes if they exist.
+        run: |
+          git checkout HEAD .github/workflows
+          git clean -df .github/workflows
+
+      - name: test with pre-commit
+        # This is the actual pre-commit test run.
+        # It will fail if any linters are unhappy
+        # it will also fail if .github/workflows is untidy
+        run: |
+          pre-commit run --all-files --hook-stage manual
+
+      - name: commit changes
+        # this will commit any changes that CI made to the branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -r --cached .
+          git add .
+          git commit -am "🤖 Automated CI update"
+          git push
+        continue-on-error: true

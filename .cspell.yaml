@@ -1,0 +1,6 @@
+dictionaries:
+  - custom-words
+dictionaryDefinitions:
+  - name: custom-words
+    path: .dictionary.txt
+    addWords: true

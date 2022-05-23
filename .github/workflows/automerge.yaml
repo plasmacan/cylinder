@@ -1,0 +1,56 @@
+name: automerge workflow
+on:
+  pull_request_target:
+
+jobs:
+  automerge_job:
+    name: automerge job
+    runs-on: ubuntu-latest
+    env:
+      # append additional users to the USER_ALLOWLIST to allow automerge for them
+      USER_ALLOWLIST: |
+        '[
+          "${{github.repository_owner}}",
+          "dependabot"
+        ]'
+    steps:
+      - name: Print Context Info
+        run: |
+          echo "event name:" ${{github.event_name}}
+          echo "event action:" ${{github.event.action}}
+          echo "actor:" ${{github.actor}}
+          echo "repository owner:" ${{github.repository_owner}}
+          echo "pull request user:" ${{github.event.pull_request.user.login}}
+          echo "pull request number:" ${{github.event.pull_request.number}}
+          echo "allow list:" ${{ env.USER_ALLOWLIST }}
+          echo "actor approved": ${{contains(fromJSON(env.USER_ALLOWLIST), github.actor)}}
+          echo "pull request user approved": ${{contains(fromJSON(env.USER_ALLOWLIST), github.event.pull_request.user.login)}}
+
+      - name: attempt automerge with PAT
+        # if we don't use a PAT then the push event will not fire when the pull request is merged into main
+        # if the push event does not fire, then the autoupdate workflow cannot auto-run on merge
+        id: automerge_pat
+        continue-on-error: true
+        if: >-
+          ${{
+            contains(fromJSON(env.USER_ALLOWLIST), github.actor) &&
+            contains(fromJSON(env.USER_ALLOWLIST), github.event.pull_request.user.login)
+          }}
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{secrets.PAT}}
+          pull-request-number: ${{github.event.pull_request.number}}
+          merge-method: squash
+
+      - name: fallback to automerge with GITHUB_TOKEN
+        if: >-
+          ${{
+            steps.automerge_pat.outcome != 'success' &&
+            contains(fromJSON(env.USER_ALLOWLIST), github.actor) &&
+            contains(fromJSON(env.USER_ALLOWLIST), github.event.pull_request.user.login)
+          }}
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          pull-request-number: ${{github.event.pull_request.number}}
+          merge-method: squash

@@ -1,0 +1,43 @@
+name: codeql workflow
+
+on:
+  pull_request:
+    branches: [main]
+
+  schedule:
+    - cron: 45 23 * * 5 # Last commit on default branch
+
+concurrency:
+  group: ci-tests-${{github.ref}}-codeql
+  cancel-in-progress: true
+
+jobs:
+  codeql_job:
+    name: codeql job
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript, python]
+
+    steps:
+      - name: print context info
+        run: |
+          echo "github.event_name:" ${{github.event_name}}
+          echo "github.event.action:" ${{github.event.action}}
+          echo "github.actor:" ${{github.actor}}
+
+      - uses: actions/checkout@v2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

@@ -1,0 +1,5 @@
+# spacing and line-length options in here are controlled by .editorconfig
+
+trailingComma: "es5"
+semi: true
+singleQuote: false

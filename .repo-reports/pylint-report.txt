@@ -1,0 +1,4 @@
+Output From recursive pylint:
+
+------------------------------------
+Your code has been rated at 10.00/10
