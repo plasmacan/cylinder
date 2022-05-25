@@ -25,6 +25,11 @@ def test_root_tripple(foo_site_client):
     assert response.status_code == 200
 
 
+def test_bad_case(foo_site_client):
+    response = foo_site_client.get("/bad_case")
+    assert response.status_code == 404
+
+
 def test_exception(foo_site_client):
     response = foo_site_client.get("/an_exception")
     assert response.headers["Late_hook"] == "good"
@@ -43,7 +48,10 @@ def test_csv(foo_site_client):
     response = foo_site_client.get("/static.csv")
     assert response.headers["Early_hook"] == "good"
     assert response.headers["Late_hook"] == "good"
-    assert response.headers["Content-Type"] == "application/vnd.ms-excel"
+    assert response.headers["Content-Type"] in [
+        "application/vnd.ms-excel",
+        "text/csv; charset=utf-8",
+    ]
     assert b"static csv" in response.data
     assert response.status_code == 200
 
