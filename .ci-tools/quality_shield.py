@@ -17,8 +17,8 @@ def main():
 
     average_score = round(results.linter.stats.global_note, 1)
     problems_path = ".repo-reports/pylint-report.txt"
-    with open(problems_path, "w", encoding="utf-8", newline="\n") as f:
-        f.write("Output From recursive pylint:\n")
+    with open(problems_path, "w+", encoding="utf-8", newline="\n") as f:
+        f.write("output from recursive pylint:\n")
         f.write(report)
 
     score_color = "red"
@@ -28,7 +28,7 @@ def main():
         score_color = "#34D058"
 
     shield_path = ".repo-shields/quality_shield.json"
-    with open(shield_path, "w", encoding="utf-8", newline="\n") as f:
+    with open(shield_path, "w+", encoding="utf-8", newline="\n") as f:
         f.write(
             json.dumps(
                 {

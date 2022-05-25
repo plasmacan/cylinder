@@ -4,17 +4,17 @@ Table Of Contents
 
 .. toctree::
 
-	index
+    index
 
 .. toctree::
-	:caption: General
-	:maxdepth: 0
+    :caption: General
+    :maxdepth: 0
 
-	general/getting-started
+    general/getting-started
 
 .. toctree::
-	:hidden:
-	:caption: Site Map
-	:maxdepth: 9
+    :hidden:
+    :caption: Site Map
+    :maxdepth: 9
 
-	self
+    self

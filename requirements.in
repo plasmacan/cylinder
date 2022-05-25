@@ -10,3 +10,5 @@ sphinx-rtd-theme
 recommonmark
 pytest-cov
 pip-tools
+flask
+waitress
