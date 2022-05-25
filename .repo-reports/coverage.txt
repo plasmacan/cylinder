@@ -1,7 +1,7 @@
-Name               Stmts   Miss Branch BrPart  Cover
-----------------------------------------------------
-docs-src/conf.py      12      0      0      0   100%
-hello_world.py         2      0      0      0   100%
-is_complex.py         19      0     18      2    95%
-----------------------------------------------------
-TOTAL                 33      0     18      2    96%
+Name                 Stmts   Miss Branch BrPart  Cover
+------------------------------------------------------
+docs-src/conf.py        12      0      0      0   100%
+src/__init__.py          0      0      0      0   100%
+src/hello_world.py       2      0      0      0   100%
+------------------------------------------------------
+TOTAL                   14      0      0      0   100%

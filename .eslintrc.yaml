@@ -13,10 +13,11 @@ rules:
     - max: 15
   max-lines-per-function:
     - error
-    - max: 50
+      # https://softwareengineering.stackexchange.com/a/27976
+    - max: 45
   max-statements:
     - error
-    - max: 50
+    - max: 45
 extends:
   - eslint:recommended
   - plugin:no-unsanitized/DOM
