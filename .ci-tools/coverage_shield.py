@@ -7,7 +7,7 @@ def main():
     # assumes coverage.py has already run so the coverage db file already exists
 
     report_process = subprocess.run(
-        ["coverage", "report", "--no-skip-covered", "--rcfile=.coveragerc.ini"],
+        ["coverage", "report", "--no-skip-covered", "--rcfile=.coveragerc.ini", "--show-missing"],
         capture_output=True,
     )
 
