@@ -274,11 +274,9 @@ def find_processor_path(suffix_list):
                 potential_file = f"{path}#{suffix}.py"
             else:
                 potential_file = f"{path}.py"
-            if os.path.isfile(potential_file):
-                if (
-                    str(pathlib.Path(potential_file).resolve()) == potential_file
-                ):  # fixes case-insensitivity in windows
-                    return potential_file
+            # pathlib .resolve() is here to handle the case-insensitivity of windows. Enforces case to match
+            if os.path.isfile(potential_file) and str(pathlib.Path(potential_file).resolve()) == potential_file:
+                return potential_file
     return None
 
 
