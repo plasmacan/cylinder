@@ -1,4 +1,158 @@
 output from recursive pylint:
+************* Module foo_site#500
+test_sites/foo_site#500.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site#500.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site#500.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site#500.py:1:33: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site#500.py:1:39: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site#500.py:1:42: W0613: Unused argument 'log' (unused-argument)
+************* Module foo_site
+test_sites/foo_site.py:4:0: C0401: Wrong spelling of a word 'necessessery' in a comment:
+# it is therefore necessessery to manually implement 404 here, otherwise there is no 404.
+                  ^^^^^^^^^^^^
+Did you mean: ''necessary' or 'sereneness''? (wrong-spelling-in-comment)
+test_sites/foo_site.py:1:0: R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
+test_sites/foo_site.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module foo_site#late_hook
+test_sites/foo_site#late_hook.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site#late_hook.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site#late_hook.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site#late_hook.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site#late_hook.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site#late_hook.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module init
+test_sites/init.py:1:0: C0104: Disallowed name "foo" (disallowed-name)
+************* Module no_hook_fail_site
+test_sites/no_hook_fail_site.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/no_hook_fail_site.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/no_hook_fail_site.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/no_hook_fail_site.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/no_hook_fail_site.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/no_hook_fail_site.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/no_hook_fail_site.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module foo_site#502
+test_sites/foo_site#502.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site#502.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site#502.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site#502.py:1:30: W0613: Unused argument 'e' (unused-argument)
+test_sites/foo_site#502.py:1:33: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site#502.py:1:39: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site#502.py:1:42: W0613: Unused argument 'log' (unused-argument)
+************* Module foo_site#418
+test_sites/foo_site#418.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site#418.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site#418.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site#418.py:1:33: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site#418.py:1:39: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site#418.py:1:42: W0613: Unused argument 'log' (unused-argument)
+************* Module minimum_site
+test_sites/minimum_site.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/minimum_site.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/minimum_site.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/minimum_site.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/minimum_site.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/minimum_site.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module foo_site#PUT
+test_sites/foo_site#PUT.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site#PUT.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site#PUT.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site#PUT.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site#PUT.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site#PUT.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module foo_site#OPTIONS
+test_sites/foo_site#OPTIONS.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site#OPTIONS.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site#OPTIONS.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site#OPTIONS.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site#OPTIONS.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site#OPTIONS.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module _run_local
+test_sites/_run_local.py:9:0: R0402: Use 'from src import cylinder' instead (consider-using-from-import)
+test_sites/_run_local.py:9:0: C0413: Import "import src.cylinder as cylinder" should be placed at the top of the module (wrong-import-position)
+test_sites/_run_local.py:19:12: W0613: Unused argument 'request' (unused-argument)
+************* Module foo_site#early_hook
+test_sites/foo_site#early_hook.py:19:0: C0401: Wrong spelling of a word 'mimetype' in a comment:
+# mimetype is application/json
+  ^^^^^^^^
+Did you mean: ''mime type' or 'mime-type' or 'mistype''? (wrong-spelling-in-comment)
+test_sites/foo_site#early_hook.py:19:0: C0401: Wrong spelling of a word 'json' in a comment:
+# mimetype is application/json
+                          ^^^^
+Did you mean: ''son' or 'j son' or 'soon' or 'css''? (wrong-spelling-in-comment)
+test_sites/foo_site#early_hook.py:4:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site#early_hook.py:4:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site#early_hook.py:4:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site#early_hook.py:4:49: W0613: Unused argument 'log' (unused-argument)
+************* Module raise_default
+test_sites/foo_site/raise_default.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/raise_default.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site/raise_default.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/foo_site/raise_default.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/raise_default.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/raise_default.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module a_redirect
+test_sites/foo_site/a_redirect.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/a_redirect.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site/a_redirect.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/foo_site/a_redirect.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/a_redirect.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/a_redirect.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module error_returns_string
+test_sites/foo_site/error_returns_string.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/error_returns_string.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site/error_returns_string.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/foo_site/error_returns_string.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/error_returns_string.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/error_returns_string.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module custom_raise_override
+test_sites/foo_site/custom_raise_override.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/custom_raise_override.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site/custom_raise_override.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/foo_site/custom_raise_override.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/custom_raise_override.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/custom_raise_override.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module bad_template#GET
+test_sites/foo_site/bad_template#GET.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/bad_template#GET.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site/bad_template#GET.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/bad_template#GET.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/bad_template#GET.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module bad_case#get
+test_sites/foo_site/bad_case#get.py:1:0: C0401: Wrong spelling of a word 'lowecase' in a comment:
+# should fail to be found because GET is lowecase
+                                         ^^^^^^^^
+Did you mean: ''lowercase' or 'pillowcase''? (wrong-spelling-in-comment)
+************* Module faulty_late_hook
+test_sites/foo_site/faulty_late_hook.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site/faulty_late_hook.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/faulty_late_hook.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/foo_site/faulty_late_hook.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/faulty_late_hook.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/faulty_late_hook.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module faulty_late_hook#late_hook
+test_sites/foo_site/faulty_late_hook#late_hook.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site/faulty_late_hook#late_hook.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/faulty_late_hook#late_hook.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site/faulty_late_hook#late_hook.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/foo_site/faulty_late_hook#late_hook.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/faulty_late_hook#late_hook.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/faulty_late_hook#late_hook.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module an_exception#GET
+test_sites/foo_site/an_exception#GET.py:1:9: W0613: Unused argument 'flask' (unused-argument)
+test_sites/foo_site/an_exception#GET.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/foo_site/an_exception#GET.py:1:21: W0613: Unused argument 'request' (unused-argument)
+test_sites/foo_site/an_exception#GET.py:1:30: W0613: Unused argument 'response' (unused-argument)
+test_sites/foo_site/an_exception#GET.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/foo_site/an_exception#GET.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/foo_site/an_exception#GET.py:1:49: W0613: Unused argument 'log' (unused-argument)
+************* Module users#early_hook
+test_sites/api/users#early_hook.py:1:16: W0613: Unused argument 'app' (unused-argument)
+test_sites/api/users#early_hook.py:1:40: W0613: Unused argument 'init' (unused-argument)
+test_sites/api/users#early_hook.py:1:46: W0613: Unused argument 'g' (unused-argument)
+test_sites/api/users#early_hook.py:1:49: W0613: Unused argument 'log' (unused-argument)
 
-------------------------------------
-Your code has been rated at 10.00/10
+-----------------------------------
+Your code has been rated at 3.72/10
