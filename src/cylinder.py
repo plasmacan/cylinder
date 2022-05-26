@@ -1,9 +1,11 @@
 import copy
 import importlib.util
 import logging
+import logging.handlers
 import mimetypes
 import os
 import pathlib
+import queue
 import time
 from datetime import datetime
 
@@ -12,23 +14,25 @@ import jinja2
 import werkzeug
 
 
-def get_app(dir_map, log_level=logging.INFO):  # pylint: disable=too-many-statements
-    init_modules = {}
+def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
     app = flask.Flask(__name__, static_folder=None, template_folder=None)
-    app.url_map.add(
-        werkzeug.routing.Rule("/", defaults={"path": "/"}, endpoint="index")
-    )
+    app.wait_for_logs = False
+    app.url_map.add(werkzeug.routing.Rule("/", defaults={"path": "/"}, endpoint="index"))
     app.url_map.add(werkzeug.routing.Rule("/<path:path>", endpoint="catchall"))
 
     log_formatter = logFormatter(
-        "%(levelname)s [%(asctime)s] %(filename)s:%(lineno)s %(request_id)s\n"
-        "    %(message)s\n",
+        "%(levelname)s [%(asctime)s] %(filename)s:%(lineno)s %(request_id)s\n    %(message)s\n",
         "%Y-%m-%d %H:%M:%S.uuu%z",
     )
-    flask.logging.default_handler.setFormatter(log_formatter)
+
+    log_handler = flask.logging.default_handler
+    log_handler.setFormatter(log_formatter)
+    app.log_queue = EvictQueue(log_queue_length)
+    queue_listener = logging.handlers.QueueListener(app.log_queue, log_handler, respect_handler_level=True)
     root_logger = logging.getLogger()
-    root_logger.addHandler(flask.logging.default_handler)
+    root_logger.handlers = [customQueueHandler(app.log_queue)]
     root_logger.setLevel(log_level)
+    queue_listener.start()
 
     jinja_loader = jinja2.FunctionLoader(jinja_loader_function)
     app.jinja_options = {"auto_reload": True, "loader": jinja_loader}
@@ -42,6 +46,16 @@ def get_app(dir_map, log_level=logging.INFO):  # pylint: disable=too-many-statem
             308: redirectPermanentRedirect,
         }
     )
+
+    setup_before_request(app, dir_map)
+    setup_catch_all(app)
+    setup_after_request(app)
+    setup_error_handler(app)
+    return app
+
+
+def setup_before_request(app, dir_map):
+    init_modules = {}
 
     @app.before_request
     def before_request():
@@ -60,20 +74,20 @@ def get_app(dir_map, log_level=logging.INFO):  # pylint: disable=too-many-statem
         flask.g._request_time = time.time()
         # _request_id required for logger (used in logger subclass)
         flask.g._request_id = f"req_{format(int(flask.g._request_time*1000), 'X')}"
-        app.logger.debug(  # pylint: disable=no-member
+        app.logger.debug(
             f"INCOMING_REQUEST: "
             f"{flask.request.remote_addr} "
             f"{flask.request.method} "
             f"{flask.request.url} "
             f"{flask.request.environ.get('SERVER_PROTOCOL', '')}"
         )
-        flask.g._module_chain = get_processors(
-            flask.request.method
-        )  # can log messages, must come after _request_id
+        flask.g._module_chain = get_processors(flask.request.method)  # can log messages, must come after _request_id
         _, processor, _ = flask.g._module_chain
         if not processor:
             flask.abort(501)
 
+
+def setup_catch_all(app):
     @app.endpoint("index")
     @app.endpoint("catchall")
     def catch_all(path):  # pylint: disable=unused-argument
@@ -81,67 +95,76 @@ def get_app(dir_map, log_level=logging.INFO):  # pylint: disable=too-many-statem
 
         for module in flask.g._module_chain:
             if module:
-                app.logger.debug(  # pylint: disable=no-member
-                    f"passing request to {module.__name__}"
-                )
+                app.logger.debug(f"passing request to {module.__name__}")
                 start_time = time.time()
-                response = module.main(
-                    flask,
-                    app,
-                    flask.request,
-                    response,
-                    flask.g._init,
-                    flask.g,
-                    app.logger,
+                response = run_func_with_dict(
+                    {
+                        "flask": flask,
+                        "app": app,
+                        "request": flask.request,
+                        "response": response,
+                        "init": flask.g._init,
+                        "g": flask.g,
+                        "log": app.logger,
+                    },
+                    module.main,
                 )
                 ms = round((time.time() - start_time) * 1000)
-                app.logger.debug(  # pylint: disable=no-member
-                    f"{module.__name__} completed in {ms}ms"
-                )
+                app.logger.debug(f"{module.__name__} completed in {ms}ms")
 
         return response
 
+
+def setup_after_request(app):
     @app.after_request
     def after_request(response):
         ms = round((time.time() - flask.g._request_time) * 1000)
-        app.logger.info(  # pylint: disable=no-member
+        app.logger.info(
             f"{flask.request.remote_addr} "
             f"{flask.request.method} "
             f"{flask.request.url} "
             f"{flask.request.environ.get('SERVER_PROTOCOL', '')} | {response.status}"
         )
-        app.logger.debug(f"REQUEST_COMPLETE in {ms}ms.")  # pylint: disable=no-member
+        app.logger.debug(f"REQUEST_COMPLETE in {ms}ms.")
+
+        if app.wait_for_logs:
+            while not app.log_queue.empty():
+                time.sleep(0.01)
+
         return response
 
+
+def setup_error_handler(app):
     @app.errorhandler(redirectCustomClass)
     def http_redirect(e):
-        app.logger.debug(  # pylint: disable=no-member
-            f"abort redirect {e.code} raised."
-        )
+        app.logger.debug(f"abort redirect {e.code} raised.")
         response = flask.make_response("", e.code, {"Location": e.description})
         return late_hook_hail_mary(app, response)
 
     @app.errorhandler(werkzeug.exceptions.HTTPException)
     def http_exception(e):
-        app.logger.debug(f"abort code {e.code} raised.")  # pylint: disable=no-member
+        app.logger.debug(f"abort code {e.code} raised.")
         custom_handler = get_http_error_handler(e.code)
         if not custom_handler:
-            app.logger.debug(  # pylint: disable=no-member
-                f"no custom handler registered for error {e.code}"
-            )
+            app.logger.debug(f"no custom handler registered for error {e.code}")
             response = e.get_response()
         else:
-            app.logger.debug(  # pylint: disable=no-member
-                f"using error handler: {custom_handler.__name__}"
-            )
+            app.logger.debug(f"using error handler: {custom_handler.__name__}")
             start_time = time.time()
-            response = custom_handler.main(
-                flask, app, flask.request, e, flask.g._init, flask.g, app.logger
+            response = run_func_with_dict(
+                {
+                    "flask": flask,
+                    "app": app,
+                    "request": flask.request,
+                    "e": e,
+                    "init": flask.g._init,
+                    "g": flask.g,
+                    "log": app.logger,
+                },
+                custom_handler.main,
             )
             ms = round((time.time() - start_time) * 1000)
-            app.logger.debug(  # pylint: disable=no-member
-                f"{custom_handler.__name__} completed in {ms}ms"
-            )
+            app.logger.debug(f"{custom_handler.__name__} completed in {ms}ms")
 
             # normalize the response variable into an actual flask response object
             if isinstance(response, (str, dict, bytes)):
@@ -150,8 +173,6 @@ def get_app(dir_map, log_level=logging.INFO):  # pylint: disable=too-many-statem
                 response = flask.make_response(response)
 
         return late_hook_hail_mary(app, response)
-
-    return app
 
 
 def late_hook_hail_mary(app, response):
@@ -165,15 +186,18 @@ def late_hook_hail_mary(app, response):
             start_time = time.time()
             # by making a copy first, we can be sure late_hook cannot alter the
             # response unless it does not except
-            response_copy = copy.deepcopy(response)
-            response = late_hook.main(
-                flask,
-                app,
-                flask.request,
-                response_copy,
-                flask.g._init,
-                flask.g,
-                app.logger,
+            copy.deepcopy(response)
+            response = run_func_with_dict(
+                {
+                    "flask": flask,
+                    "app": app,
+                    "request": flask.request,
+                    "response": response,
+                    "init": flask.g._init,
+                    "g": flask.g,
+                    "log": app.logger,
+                },
+                late_hook.main,
             )
             ms = round((time.time() - start_time) * 1000)
             app.logger.debug(f"{late_hook.__name__} completed in {ms}ms")
@@ -183,22 +207,6 @@ def late_hook_hail_mary(app, response):
                 f"in {late_hook.__name__}, continuing anyway"
             )
     return response
-
-
-class logFormatter(logging.Formatter):
-    def format(self, record):
-        if flask.has_request_context():
-            record.request_id = flask.g._request_id
-        else:
-            record.request_id = ""
-        return super().format(record)
-
-    def formatTime(self, record, datefmt=None):
-        formatted_time = time.strftime(datefmt, self.converter(record.created))
-        formatted_time = formatted_time.replace(
-            "uuu", datetime.fromtimestamp(record.created).strftime("%f")[0:3]
-        )
-        return formatted_time
 
 
 def jinja_uptodate_closure(template):
@@ -259,22 +267,6 @@ def get_processors(http_method):
     return (early_hook, processor, late_hook)
 
 
-class directFileServe:
-    def main(flask, app, request, response, init, g, log):
-        # pylint: disable=redefined-outer-name,no-self-argument,no-member,unused-argument
-        direct_path = flask.g._search_paths[-1]
-        mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
-
-        if content_encoding:
-            response.content_encoding = content_encoding
-
-        response.mimetype = mimetype or "application/octet-stream"
-
-        with open(direct_path, "rb") as f:
-            response.data = f.read()
-        return response
-
-
 def find_processor_path(suffix_list):
     for path in reversed(flask.g._search_paths):
         for suffix in suffix_list:
@@ -294,9 +286,70 @@ def get_search_paths(site_path, url_path_str):
     part_list = url_path_str.strip("/").split("/")
     results = [site_path]
     for part in part_list:
-        if part and part != "..":  # path traversal
+        if part and part != "..":  # path traversal protection
             results.append(results[-1] / part)
     return results
+
+
+def run_func_with_dict(input_dict, func):
+    arg_count = func.__code__.co_argcount
+    var_names = func.__code__.co_varnames
+    params = var_names[:arg_count]
+    input_list = []
+    for param in params:
+        input_list.append(input_dict[param])
+    return func(*input_list)
+
+
+class directFileServe:
+    def main(response, g):
+        # pylint: disable=no-self-argument
+        # no-member?
+        direct_path = g._search_paths[-1]
+        mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
+
+        if content_encoding:
+            response.content_encoding = content_encoding
+
+        response.mimetype = mimetype or "application/octet-stream"
+
+        with open(direct_path, "rb") as f:
+            response.data = f.read()
+        return response
+
+
+class customQueueHandler(logging.handlers.QueueHandler):
+    """Extend QueueHandler to attach Flask request context to record since
+    request context won't be available inside listener thread.
+    """
+
+    def prepare(self, record):
+        try:
+            record.request_id = flask.g._request_id
+        except Exception:
+            record.request_id = ""
+        return record
+
+
+class logFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        formatted_time = time.strftime(datefmt, self.converter(record.created))
+        formatted_time = formatted_time.replace("uuu", datetime.fromtimestamp(record.created).strftime("%f")[0:3])
+        return formatted_time
+
+
+class EvictQueue(queue.Queue):
+    # ensures the queue handler cannot consume all available RAM
+    def __init__(self, maxsize):
+        super().__init__(maxsize)
+
+    def put(self, item, block=False, timeout=None):
+        while True:
+            try:
+                super().put(item, block=False)
+                break
+            except queue.Full:
+                self.get_nowait()
 
 
 class redirectCustomClass(werkzeug.exceptions.HTTPException):
