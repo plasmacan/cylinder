@@ -11,6 +11,7 @@ jobs:
       USER_ALLOWLIST: |
         '[
           "${{github.repository_owner}}",
+          "grintor"
           "dependabot"
         ]'
     steps:

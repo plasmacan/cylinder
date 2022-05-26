@@ -1,4 +1,6 @@
 import pathlib
+import sys
+import time
 
 
 def test_root_tripple(foo_site_client):
@@ -118,9 +120,7 @@ def test_put(foo_site_client):
 
 
 def test_broken_put(foo_site_client):
-    response = foo_site_client.put(
-        "/test", data="{", headers={"Content-Type": "application/json"}
-    )
+    response = foo_site_client.put("/test", data="{", headers={"Content-Type": "application/json"})
     assert response.headers["Late_hook"] == "good"
     assert b"Bad Request" in response.data
     assert b"invalid json provided" in response.data
@@ -160,8 +160,53 @@ def test_no_hook_fail_site(no_hook_fail_site_client):
     assert b"there is an error in the application" in response.data
 
 
-def test_logger(minimum_site_app, capsys):
-    log = minimum_site_app.logger
-    log.error("the logger works")
+def test_request_wait(minimum_site_app, capsys):
+    minimum_site_app.wait_for_logs = True
+    test_client = minimum_site_app.test_client()
+    test_client.get("/test")
+    test_client.get("/test")
+
+    captured1 = capsys.readouterr()
+
+    # wait for the logger queue to drain
+    while not minimum_site_app.log_queue.empty():
+        time.sleep(0.01)
+
+    captured2 = capsys.readouterr()
+
+    assert len(captured1.err) > 0
+    assert len(captured2.err) == 0
+
+
+def test_request_nowait(minimum_site_app, capsys):
+    minimum_site_app.wait_for_logs = False
+    test_client = minimum_site_app.test_client()
+    test_client.get("/test")
+    test_client.get("/test")
+
+    captured1 = capsys.readouterr()
+    sys.stderr.write(captured1.err)
+
+    # wait for the logger queue to drain
+    while not minimum_site_app.log_queue.empty():
+        time.sleep(0.01)
+
+    captured2 = capsys.readouterr()
+
+    assert len(captured1.err) < len(captured2.err)
+
+
+def test_logger_full(tiny_queue_app, capsys):
+
+    # the buffer only holds 1, this test fills is up
+    log = tiny_queue_app.logger
+    for num in range(10):
+        log.error(f"test_logger_full {num}")
+
+    # wait for the logger to finish output
+    while not tiny_queue_app.log_queue.empty():
+        time.sleep(0.01)
+
     captured = capsys.readouterr()
-    assert "the logger works" in captured.err
+
+    assert len(captured.err.splitlines()) < 10  # "lines had to be dropped if buffer was full"
