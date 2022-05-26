@@ -137,11 +137,6 @@ repos:
   - repo: local
     hooks:
       - id: pylint
-        exclude: |
-          (?x)^(
-              tests/ |
-              test_sites/
-          )
         name: pylint
         entry: pylint
         language: system
