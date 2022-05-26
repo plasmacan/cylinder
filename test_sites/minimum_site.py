@@ -1,3 +1,3 @@
-def main(flask, app, request, response, init, g, log):
+def main(response):
     response.data = "hello world"
     return response

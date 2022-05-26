@@ -157,6 +157,7 @@ def setup_error_handler(app):
                     "app": app,
                     "request": flask.request,
                     "e": e,
+                    "response": e.get_response(),
                     "init": flask.g._init,
                     "g": flask.g,
                     "log": app.logger,
