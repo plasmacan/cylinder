@@ -1,9 +1,4 @@
 output from recursive pylint:
-************* Module src.cylinder
-src/cylinder.py:277:0: C0401: Wrong spelling of a word 'pathlib' in a comment:
-# pathlib .resolve() is here to handle the case-insensitivity of windows. Enforces case to match
-  ^^^^^^^
-Did you mean: ''path lib' or 'path-lib' or 'pathless''? (wrong-spelling-in-comment)
 
------------------------------------
-Your code has been rated at 9.96/10
+------------------------------------
+Your code has been rated at 10.00/10
