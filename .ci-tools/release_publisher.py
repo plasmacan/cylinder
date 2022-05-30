@@ -46,8 +46,8 @@ if code_version != release_version:
     print("version mismatch")
     sys.exit(7)
 
-shutil.rmtree("dist")
-shutil.rmtree("build")
+shutil.rmtree("dist", ignore_errors=True)
+shutil.rmtree("build", ignore_errors=True)
 
 subprocess.run(["python", "setup.py", "sdist", "bdist_wheel"], check=True)
 subprocess.run(["twine", "check", "dist/*"], check=True)
