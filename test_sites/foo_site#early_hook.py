@@ -1,7 +1,7 @@
 import json
 
 
-def main(flask, app, request, response, init, g, log):
+def main(flask, request, response, init, g, log):
     # an early hook can be used to handle things like removing trailing slashes
     if request.base_url.endswith("/") and request.path != "/":
         new_base_url = request.base_url.rstrip("/")
