@@ -2,6 +2,6 @@ Name               Stmts   Miss Branch BrPart  Cover   Missing
 --------------------------------------------------------------
 docs-src/conf.py      12      0      0      0   100%
 src/__init__.py        0      0      0      0   100%
-src/cylinder.py      228      0     72      0   100%
+src/cylinder.py      229      0     72      0   100%
 --------------------------------------------------------------
-TOTAL                240      0     72      0   100%
+TOTAL                241      0     72      0   100%
