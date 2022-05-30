@@ -3,6 +3,7 @@ name: release workflow
 on:
   release:
     types: [published]
+    branches: [main]
 
 concurrency:
   group: ci-tests-${{github.ref}}-release

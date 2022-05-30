@@ -29,7 +29,7 @@ README = (HERE / "README.md").read_text(encoding="utf-8")
 setup(
     name="cylinder",
     version=src.cylinder.__version__,
-    description="A web framework based on Flask",
+    description="A web application framework and webserver based on Flask and Waitress",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/plasmacan/cylinder",
@@ -48,5 +48,5 @@ setup(
     py_modules=["cylinder"],
     package_dir={"": "src"},
     include_package_data=False,
-    install_requires=[],
+    install_requires=["flask", "waitress"],
 )
