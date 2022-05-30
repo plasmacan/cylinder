@@ -13,6 +13,8 @@ import flask
 import jinja2
 import werkzeug
 
+__version__ = "v0.0.2"
+
 
 def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
     app = flask.Flask(__name__, static_folder=None, template_folder=None)

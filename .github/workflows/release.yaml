@@ -6,23 +6,29 @@ on:
 
 concurrency:
   group: ci-tests-${{github.ref}}-release
-  cancel-in-progress: true
 
 jobs:
-  release_job:
+  test_pypi_deploy_job:
     runs-on: ubuntu-latest
-    name: release job
+    name: deploy to test pypi job
+    env:
+      REPO_URL: https://test.pypi.org/legacy/
+      PYPI_USER: grintor
+    environment:
+      name: test.pypi.org
+      url: https://test.pypi.org/project/cylinder/
     steps:
-      - name: Dump GitHub context
-        id: github_context_step
-        run: echo '${{ toJSON(github) }}'
-      - name: Dump job context
-        run: echo '${{ toJSON(job) }}'
-      - name: Dump steps context
-        run: echo '${{ toJSON(steps) }}'
-      - name: Dump runner context
-        run: echo '${{ toJSON(runner) }}'
-      - name: Dump strategy context
-        run: echo '${{ toJSON(strategy) }}'
-      - name: Dump matrix context
-        run: echo '${{ toJSON(matrix) }}'
+      run: .ci-tools/release_publisher.py ${{github.ref_name}}
+
+  prod_pypi_deploy_job:
+    runs-on: ubuntu-latest
+    name: deploy to production pypi job
+    needs: test_pypi_deploy_job
+    env:
+      REPO_URL: https://upload.pypi.org/legacy/
+      PYPI_USER: grintor
+    environment:
+      name: pypi.org
+      url: https://pypi.org/project/cylinder/
+    steps:
+      run: .ci-tools/release_publisher.py ${{github.ref_name}}

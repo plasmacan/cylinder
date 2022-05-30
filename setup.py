@@ -2,6 +2,8 @@ import pathlib
 
 from setuptools import setup
 
+import src.cylinder
+
 # pylint: disable=wrong-spelling-in-comment
 
 # pip install twine
@@ -13,8 +15,8 @@ from setuptools import setup
 # rd /s /q build
 # python setup.py sdist bdist_wheel
 # twine check dist/*
-# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-# twine upload dist/*
+# twine upload --repository-url https://test.pypi.org/legacy/ dist/* --non-interactive --username xxx --password xxx
+# twine upload --repository-url https://upload.pypi.org/legacy/ dist/* --non-interactive --username xxx --password xxx
 # pip install --upgrade cylinder
 
 # The directory containing this file
@@ -26,7 +28,7 @@ README = (HERE / "README.md").read_text(encoding="utf-8")
 # This call to setup() does all the work
 setup(
     name="cylinder",
-    version="0.0.1",
+    version=src.cylinder.__version__,
     description="A web framework based on Flask",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -44,6 +46,7 @@ setup(
         "Programming Language :: Python :: 3.11",
     ],
     py_modules=["cylinder"],
+    package_dir={"": "src"},
     include_package_data=False,
     install_requires=[],
 )
