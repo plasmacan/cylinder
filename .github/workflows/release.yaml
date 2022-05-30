@@ -14,6 +14,7 @@ jobs:
     env:
       REPO_URL: https://test.pypi.org/legacy/
       PYPI_USER: grintor
+      PYPI_KEY: ${{secrets.PYPI_KEY}}
     environment:
       name: test.pypi.org
       url: https://test.pypi.org/project/cylinder/
@@ -43,6 +44,7 @@ jobs:
     env:
       REPO_URL: https://upload.pypi.org/legacy/
       PYPI_USER: grintor
+      PYPI_KEY: ${{secrets.PYPI_KEY}}
     environment:
       name: pypi.org
       url: https://pypi.org/project/cylinder/
