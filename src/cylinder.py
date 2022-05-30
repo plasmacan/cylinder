@@ -13,7 +13,7 @@ import flask
 import jinja2
 import werkzeug
 
-__version__ = "v0.0.2"
+__version__ = "v0.0.3"
 
 
 def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
