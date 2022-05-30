@@ -1,4 +1,5 @@
 import copy
+import functools
 import importlib.util
 import logging
 import logging.handlers
@@ -11,12 +12,16 @@ from datetime import datetime
 
 import flask
 import jinja2
+import waitress
 import werkzeug
+
+__version__ = "v0.0.4"
 
 
 def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
     app = flask.Flask(__name__, static_folder=None, template_folder=None)
     app.wait_for_logs = False
+    app.run = functools.partial(waitress.serve, app)
     app.url_map.add(werkzeug.routing.Rule("/", defaults={"path": "/"}, endpoint="index"))
     app.url_map.add(werkzeug.routing.Rule("/<path:path>", endpoint="catchall"))
 

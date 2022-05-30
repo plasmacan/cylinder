@@ -1,0 +1,67 @@
+name: release workflow
+
+on:
+  release:
+    types: [published]
+    branches: [main]
+
+concurrency:
+  group: ci-tests-${{github.ref}}-release
+
+jobs:
+  test_pypi_deploy_job:
+    runs-on: ubuntu-latest
+    name: deploy to test pypi job
+    env:
+      REPO_URL: https://test.pypi.org/legacy/
+      PYPI_KEY: ${{secrets.PYPI_KEY}}
+    environment:
+      name: test.pypi.org
+      url: https://test.pypi.org/project/cylinder/
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: deploy
+        run: python .ci-tools/release_publisher.py ${{github.ref_name}}
+
+  prod_pypi_deploy_job:
+    runs-on: ubuntu-latest
+    name: deploy to production pypi job
+    needs: test_pypi_deploy_job
+    env:
+      REPO_URL: https://upload.pypi.org/legacy/
+      PYPI_KEY: ${{secrets.PYPI_KEY}}
+    environment:
+      name: pypi.org
+      url: https://pypi.org/project/cylinder/
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: deploy
+        run: python .ci-tools/release_publisher.py ${{github.ref_name}}

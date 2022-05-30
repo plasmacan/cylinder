@@ -12,3 +12,4 @@ pytest-cov
 pip-tools
 flask
 waitress
+twine
