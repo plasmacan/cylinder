@@ -7,18 +7,28 @@ import mimetypes
 import os
 import pathlib
 import queue
+import threading
 import time
 from datetime import datetime
+from types import SimpleNamespace
 
 import flask
 import jinja2
 import waitress
 import werkzeug
 
-__version__ = "v0.0.4"
+__version__ = "v0.0.5"
+
+
+werkzeug_local = werkzeug.local.Local()
+local_manager = werkzeug.local.LocalManager([werkzeug_local])
+global_proxy = werkzeug_local("global_proxy")
 
 
 def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
+
+    assert callable(dir_map), "dir_map must be a function"
+
     app = flask.Flask(__name__, static_folder=None, template_folder=None)
     app.wait_for_logs = False
     app.run = functools.partial(waitress.serve, app)
@@ -60,25 +70,30 @@ def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
 
 
 def setup_before_request(app, dir_map):
+    init_modules_lock = threading.Lock()
     init_modules = {}
 
     @app.before_request
     def before_request():
-        if callable(dir_map):
-            site_dir, site_name = dir_map(flask.request)
-        else:
-            site_dir, site_name = dir_map
+        site_dir, site_name = dir_map(flask.request)
+
+        werkzeug_local.global_proxy = SimpleNamespace()
+
         site_path = pathlib.Path.cwd() / site_dir
         site_root = site_path / site_name
         site_path_str = str(site_path)
-        if site_path_str not in init_modules:
-            init_modules[site_path_str] = get_module(str(site_path / "init.py"))
-        flask.g._init = init_modules[site_path_str]
-        flask.g._search_paths = get_search_paths(site_root, flask.request.path)
-        flask.g._site_path = site_path
-        flask.g._request_time = time.time()
-        # _request_id required for logger (used in logger subclass)
-        flask.g._request_id = f"req_{format(int(flask.g._request_time*1000), 'X')}"
+        with init_modules_lock:
+            if site_path_str not in init_modules:
+                init_modules[site_path_str] = get_module(str(site_path / "init.py"))
+
+        global_proxy.init = init_modules[site_path_str]
+        global_proxy.search_paths = get_search_paths(site_root, flask.request.path)
+        global_proxy.site_path = site_path
+        global_proxy.request_time = time.time()
+
+        # request_id required for logger (used in logger subclass)
+        global_proxy.request_id = f"req_{format(int(global_proxy.request_time*1000), 'X')}"
+
         app.logger.debug(
             f"INCOMING_REQUEST: "
             f"{flask.request.remote_addr} "
@@ -86,8 +101,11 @@ def setup_before_request(app, dir_map):
             f"{flask.request.url} "
             f"{flask.request.environ.get('SERVER_PROTOCOL', '')}"
         )
-        flask.g._module_chain = get_processors(flask.request.method)  # can log messages, must come after _request_id
-        _, processor, _ = flask.g._module_chain
+
+        # can log messages, must come after logger
+        global_proxy.module_chain = get_processors(flask.request.method)
+
+        _, processor, _ = global_proxy.module_chain
         if not processor:
             flask.abort(501)
 
@@ -98,19 +116,18 @@ def setup_catch_all(app):
     def catch_all(path):  # pylint: disable=unused-argument
         response = flask.Response()
 
-        for module in flask.g._module_chain:
+        for module in global_proxy.module_chain:
             if module:
                 app.logger.debug(f"passing request to {module.__name__}")
                 start_time = time.time()
                 response = run_func_with_dict(
                     {
-                        "flask": flask,
-                        "app": app,
                         "request": flask.request,
                         "response": response,
-                        "init": flask.g._init,
+                        "init": global_proxy.init,
                         "g": flask.g,
                         "log": app.logger,
+                        "flask": flask,
                     },
                     module.main,
                 )
@@ -123,7 +140,7 @@ def setup_catch_all(app):
 def setup_after_request(app):
     @app.after_request
     def after_request(response):
-        ms = round((time.time() - flask.g._request_time) * 1000)
+        ms = round((time.time() - global_proxy.request_time) * 1000)
         app.logger.info(
             f"{flask.request.remote_addr} "
             f"{flask.request.method} "
@@ -135,7 +152,7 @@ def setup_after_request(app):
         if app.wait_for_logs:
             while not app.log_queue.empty():
                 time.sleep(0.01)
-
+        local_manager.cleanup()
         return response
 
 
@@ -158,14 +175,13 @@ def setup_error_handler(app):
             start_time = time.time()
             response = run_func_with_dict(
                 {
-                    "flask": flask,
-                    "app": app,
                     "request": flask.request,
                     "e": e,
                     "response": e.get_response(),
-                    "init": flask.g._init,
+                    "init": global_proxy.init,
                     "g": flask.g,
                     "log": app.logger,
+                    "flask": flask,
                 },
                 custom_handler.main,
             )
@@ -185,23 +201,21 @@ def late_hook_hail_mary(app, response):
     # late_hook_hail_mary() will attempt to pass a copy of the response through a late_hook.
     # if the late_hook throws an exception, then then the copy is discarded and the original response is returned.
     # if late_hook succeeds, then the modified copy of the response is returned.
-    _, _, late_hook = flask.g._module_chain
+    _, _, late_hook = global_proxy.module_chain
     if late_hook:
         try:
             app.logger.debug(f"passing request to {late_hook.__name__}")
             start_time = time.time()
-            # by making a copy first, we can be sure late_hook cannot alter the
-            # response unless it does not except
+            # by making a copy first, we can be sure late_hook cannot alter the response unless it does not except
             copy.deepcopy(response)
             response = run_func_with_dict(
                 {
-                    "flask": flask,
-                    "app": app,
                     "request": flask.request,
                     "response": response,
-                    "init": flask.g._init,
+                    "init": global_proxy.init,
                     "g": flask.g,
                     "log": app.logger,
+                    "flask": flask,
                 },
                 late_hook.main,
             )
@@ -228,7 +242,7 @@ def jinja_uptodate_closure(template):
 
 
 def jinja_loader_function(name):
-    template = flask.g._site_path / "templates" / name
+    template = global_proxy.site_path / "templates" / name
     if os.path.exists(template):
         with open(template, "r", encoding="UTF-8") as f:
             template_content = f.read()
@@ -257,7 +271,7 @@ def get_processors(http_method):
     early_hook = get_module(early_hook_file)
 
     if http_method == "GET":
-        direct_path = flask.g._search_paths[-1]
+        direct_path = global_proxy.search_paths[-1]
         if os.path.isfile(direct_path) and not str(direct_path).endswith(".py"):
             processor = directFileServe
         else:
@@ -274,7 +288,7 @@ def get_processors(http_method):
 
 
 def find_processor_path(suffix_list):
-    for path in reversed(flask.g._search_paths):
+    for path in reversed(global_proxy.search_paths):
         for suffix in suffix_list:
             if suffix:
                 potential_file = f"{path}#{suffix}.py"
@@ -306,10 +320,10 @@ def run_func_with_dict(input_dict, func):
 
 
 class directFileServe:
-    def main(response, g):
+    def main(response):
         # pylint: disable=no-self-argument
         # no-member?
-        direct_path = g._search_paths[-1]
+        direct_path = global_proxy.search_paths[-1]
         mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
 
         if content_encoding:
@@ -329,7 +343,7 @@ class customQueueHandler(logging.handlers.QueueHandler):
 
     def prepare(self, record):
         try:
-            record.request_id = flask.g._request_id
+            record.request_id = global_proxy.request_id
         except Exception:
             record.request_id = ""
         return record

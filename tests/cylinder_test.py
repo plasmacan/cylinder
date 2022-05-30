@@ -208,5 +208,4 @@ def test_logger_full(tiny_queue_app, capsys):
         time.sleep(0.01)
 
     captured = capsys.readouterr()
-
-    assert len(captured.err.splitlines()) < 10  # "lines had to be dropped if buffer was full"
+    assert len(captured.err.splitlines()) < 10  # lines had to be dropped if buffer was full

@@ -21,24 +21,30 @@ def foo_site_app():
 
 @pytest.fixture()
 def minimum_site_app():
-    dir_map = ("test_sites", "minimum_site")
-    app = cylinder.get_app(dir_map, logging.DEBUG)
+    def dir_map_func(request):  # pylint: disable=unused-argument
+        return "test_sites", "minimum_site"
+
+    app = cylinder.get_app(dir_map_func, logging.DEBUG)
     app.wait_for_logs = True
     return app
 
 
 @pytest.fixture()
 def no_hook_fail_site_app():
-    dir_map = ("test_sites", "no_hook_fail_site")
-    app = cylinder.get_app(dir_map, logging.DEBUG)
+    def dir_map_func(request):  # pylint: disable=unused-argument
+        return "test_sites", "no_hook_fail_site"
+
+    app = cylinder.get_app(dir_map_func, logging.DEBUG)
     app.wait_for_logs = True
     return app
 
 
 @pytest.fixture()
 def tiny_queue_app():
-    dir_map = ("test_sites", "minimum_site")
-    app = cylinder.get_app(dir_map, logging.DEBUG, log_queue_length=1)
+    def dir_map_func(request):  # pylint: disable=unused-argument
+        return "test_sites", "minimum_site"
+
+    app = cylinder.get_app(dir_map_func, logging.DEBUG, log_queue_length=1)
     app.wait_for_logs = True
     return app
 
