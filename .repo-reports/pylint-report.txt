@@ -1,4 +1,6 @@
 output from recursive pylint:
+************* Module src.cylinder
+src/cylinder.py:178:25: W0613: Unused argument 'exc' (unused-argument)
 
-------------------------------------
-Your code has been rated at 10.00/10
+-----------------------------------
+Your code has been rated at 9.91/10
