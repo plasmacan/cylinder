@@ -10,7 +10,7 @@ Table Of Contents
     :caption: General
     :maxdepth: 0
 
-    general/getting-started
+    general/contributing
 
 .. toctree::
     :hidden:

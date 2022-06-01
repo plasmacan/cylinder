@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Getting Started with Hello World CI &mdash; Hello World 0.1 documentation</title>
+  <title>Contributing to Plasma Cylinder &mdash; Hello World 0.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -18,7 +18,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex/" />
     <link rel="search" title="Search" href="../../search/" />
-    <link rel="prev" title="Hello World CI" href="../../" /> 
+    <link rel="prev" title="Plasma Cylinder" href="../../" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -37,16 +37,11 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../">Hello World CI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../">Plasma Cylinder</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">General</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started with Hello World CI</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#use-the-template">1) use the template</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#enable-the-actions">2) enable the actions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#protect-the-branch">3) protect the branch</a></li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing to Plasma Cylinder</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Site Map</span></p>
 <ul>
@@ -67,7 +62,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../contents/" class="icon icon-home"></a> &raquo;</li>
-      <li>Getting Started with Hello World CI</li>
+      <li>Contributing to Plasma Cylinder</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -76,31 +71,35 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="getting-started-with-hello-world-ci">
-<h1>Getting Started with Hello World CI<a class="headerlink" href="#getting-started-with-hello-world-ci" title="Permalink to this headline"></a></h1>
-<section id="use-the-template">
-<h2>1) use the template<a class="headerlink" href="#use-the-template" title="Permalink to this headline"></a></h2>
-<ol class="simple">
-<li><p><strong>Go here</strong> foo bar</p></li>
-<li><p><strong>Do this</strong> foo bar</p></li>
-<li><p><strong>Try it out and customize with our Automations</strong> foo bar</p></li>
-</ol>
-</section>
-<section id="enable-the-actions">
-<h2>2) enable the actions<a class="headerlink" href="#enable-the-actions" title="Permalink to this headline"></a></h2>
-<p>foo bar</p>
-</section>
-<section id="protect-the-branch">
-<h2>3) protect the branch<a class="headerlink" href="#protect-the-branch" title="Permalink to this headline"></a></h2>
-<p>foo bar</p>
-</section>
+  <section id="contributing-to-plasma-cylinder">
+<h1>Contributing to Plasma Cylinder<a class="headerlink" href="#contributing-to-plasma-cylinder" title="Permalink to this headline"></a></h1>
+<p>Plasma Cylinder uses <a class="reference external" href="https://github.com/pre-commit/pre-commit">pre-commit</a> to enforce the the coding standards. This is enforced in CI, but should be set up
+locally as well.</p>
+<p>Minimum system requirements are:</p>
+<ul class="simple">
+<li><p>Java 8</p></li>
+<li><p>Ruby 2.7</p></li>
+<li><p>Python 3.7</p></li>
+</ul>
+<p>After installing the prerequisites, enter the repo directory and create a new python virtual environment
+using <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">venv</span> <span class="pre">venv</span></code></p>
+<p>Enter the virtual environment using <code class="docutils literal notranslate"><span class="pre">./venv/Scripts/activate</span></code>
+(or <code class="docutils literal notranslate"><span class="pre">.\venv\Scripts\activate</span></code> on windows)</p>
+<p>From within the virtual environment, install the requirements <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code></p>
+<p>Now, set up the pre-commit hook using <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">install</span></code></p>
+<p>To confirm all of the hooks work, run <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">run</span> <span class="pre">-a</span></code></p>
+<p>Before pushing, make sure to run <code class="docutils literal notranslate"><span class="pre">pytest</span></code>. Running that command will not only perform all of the functional tests,
+but will also build a test copy of the documentation (this documentation: which you are reading now) and produce a
+beautiful HTML coverage report. Both of these will be located in the <code class="docutils literal notranslate"><span class="pre">.repo-reports</span></code> directory.</p>
+<p>Pytest is also run in CI. A failing test will block a merge, so make sure the tests are passing before making a
+pull request.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../../" class="btn btn-neutral float-left" title="Hello World CI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../" class="btn btn-neutral float-left" title="Plasma Cylinder" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

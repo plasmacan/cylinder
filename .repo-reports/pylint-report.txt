@@ -1,6 +1,6 @@
 output from recursive pylint:
-************* Module src.cylinder
-src/cylinder.py:178:25: W0613: Unused argument 'exc' (unused-argument)
+************* Module myserver
+examples/minimum viable webapp/myserver.py:1:0: E0401: Unable to import 'cylinder' (import-error)
 
 -----------------------------------
-Your code has been rated at 9.91/10
+Your code has been rated at 9.89/10

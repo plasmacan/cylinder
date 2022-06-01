@@ -49,7 +49,7 @@ repos:
         types_or: [css, javascript, html, yaml, json, markdown]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.15.0
+    rev: v8.16.0
     hooks:
       - id: eslint
         additional_dependencies: [eslint@8.15.0, eslint-config-prettier@8.5.0, eslint-plugin-no-unsanitized@4.0.1]
@@ -99,7 +99,7 @@ repos:
         args: ["--max-line-length", "119", "--file-encoding", "utf-8"]
 
   - repo: https://github.com/markdownlint/markdownlint
-    rev: v0.9.0
+    rev: v0.11.0
     hooks:
       - id: markdownlint
 
