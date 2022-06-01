@@ -175,7 +175,7 @@ def setup_after_request(app):
 
 def setup_teardown_request(app):
     @app.teardown_request
-    def teardown_request(exc):
+    def teardown_request(excpt):  # pylint: disable=unused-argument
         local_manager.cleanup()
 
 
