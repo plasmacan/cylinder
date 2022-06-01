@@ -1,3 +1,3 @@
 def main(request, response, init, g, log):
-    response = 1 / 0
+    response.headers["late_hook"] = "alright"
     return response

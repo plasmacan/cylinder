@@ -1,3 +1,3 @@
-def main(flask, request, response, init, g, log):
+def main(request, response, init, g, log, abort):
     # redirect to google
-    flask.abort(307, "http://www.google.com/")
+    abort(307, "http://www.google.com/")

@@ -1,4 +1,4 @@
-def main(flask, request, response, init, g, log):
+def main(request, response, init, g, log, render_template):
 
-    response.data = flask.render_template("9usdhf9ubsd.html", name="Chris")
+    response.data = render_template("9usdhf9ubsd.html", name="Chris")
     return response

@@ -1,3 +1,3 @@
-def main(flask, request, response, init, g, log):
+def main(request, response, init, g, log, abort):
     # raise a 502 error which will be handled by our custom 502 handler
-    flask.abort(502)
+    abort(502)

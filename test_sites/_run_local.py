@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 
@@ -7,7 +6,7 @@ import src.cylinder as cylinder
 
 
 def main():
-    app = cylinder.get_app(dir_map, logging.DEBUG)
+    app = cylinder.get_app(dir_map, secret_key="df")
     app.run(host="127.0.0.42", port=80)
 
 
