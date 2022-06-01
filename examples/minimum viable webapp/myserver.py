@@ -6,7 +6,7 @@ def main():
     app.run(host="127.0.0.42", port=80)
 
 
-def triage(request):
+def triage(request):  # pylint: disable=unused-argument
     # here you can examine the incoming request and decide to route to different webapps
     # depending on the hostname for example
 
