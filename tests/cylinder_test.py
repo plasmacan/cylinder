@@ -67,6 +67,15 @@ def test_txt(foo_site_client):
     assert response.status_code == 200
 
 
+def test_path_traversal(foo_site_client):
+    response = foo_site_client.get("/../../static.txt")
+    assert response.headers["Early_hook"] == "good"
+    assert response.headers["Late_hook"] == "good"
+    assert response.headers["Content-Type"] == "text/plain; charset=utf-8"
+    assert b"static txt" in response.data
+    assert response.status_code == 200
+
+
 def test_txt_gz(foo_site_client):
     response = foo_site_client.get("/static.txt.gz")
     assert response.headers["Early_hook"] == "good"
@@ -77,11 +86,12 @@ def test_txt_gz(foo_site_client):
     assert response.status_code == 200
 
 
-def test_faulty_late_hook(foo_site_client):
+def test_faulty_late_hook(foo_site_client, caplog):
     response = foo_site_client.get("/faulty_late_hook")
     assert "Late_hook" not in response.headers
     assert response.status_code == 500
     assert b"division by zero" in response.data
+    assert "continuing anyway" in caplog.text
 
 
 def test_custom_raise_override(foo_site_client):
@@ -134,6 +144,16 @@ def test_broken_template(foo_site_client):
     assert b"9usdhf9ubsd.html" in response.data
 
 
+def test_py_bypass(foo_site_client):
+    response = foo_site_client.get("/faulty_late_hook.py")
+    assert response.status_code == 404
+
+
+def test_case_bypass(foo_site_client):
+    response = foo_site_client.get("/faulty_late_hook.PY")
+    assert response.status_code == 404
+
+
 def test_not_implemented(foo_site_client):
     response = foo_site_client.delete("/")
     assert response.headers["Late_hook"] == "good"
@@ -144,8 +164,22 @@ def test_not_implemented(foo_site_client):
 def test_error_returns_string(foo_site_client):
     response = foo_site_client.get("/error_returns_string")
     assert response.headers["Late_hook"] == "good"
-    assert response.status_code == 418
-    assert b"I am but a teapot, my friend" in response.data
+    assert response.status_code == 500
+    assert b"return the same response passed in" in response.data
+
+
+def test_no_method_bypass(foo_site_client):
+    response = foo_site_client.open("/", method="early")
+    assert response.status_code == 501
+    assert "Early_hook" not in response.headers
+
+
+def test_custom_method(foo_site_client):
+    response = foo_site_client.open("/custom_method", method="BLARG")
+    assert response.status_code == 200
+    assert b"blarg" in response.data
+    assert response.headers["Early_hook"] == "good"
+    assert response.headers["Late_hook"] == "alright"
 
 
 def test_minimum_site(minimum_site_client):

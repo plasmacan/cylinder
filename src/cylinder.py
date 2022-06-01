@@ -1,6 +1,7 @@
 import copy
 import functools
 import importlib.util
+import json
 import logging
 import logging.handlers
 import mimetypes
@@ -25,11 +26,12 @@ local_manager = werkzeug.local.LocalManager([werkzeug_local])
 global_proxy = werkzeug_local("global_proxy")
 
 
-def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
+def get_app(dir_map, log_level=logging.DEBUG, secret_key=None, log_queue_length=1000):
 
     assert callable(dir_map), "dir_map must be a function"
 
     app = flask.Flask(__name__, static_folder=None, template_folder=None)
+    app.secret_key = secret_key
     app.wait_for_logs = False
     app.run = functools.partial(waitress.serve, app)
     app.url_map.add(werkzeug.routing.Rule("/", defaults={"path": "/"}, endpoint="index"))
@@ -66,6 +68,7 @@ def get_app(dir_map, log_level=logging.INFO, log_queue_length=1000):
     setup_catch_all(app)
     setup_after_request(app)
     setup_error_handler(app)
+    setup_teardown_request(app)
     return app
 
 
@@ -81,13 +84,16 @@ def setup_before_request(app, dir_map):
 
         site_path = pathlib.Path.cwd() / site_dir
         site_root = site_path / site_name
+        global_proxy.search_paths = get_search_paths(site_root, flask.request.path)
+
         site_path_str = str(site_path)
         with init_modules_lock:
             if site_path_str not in init_modules:
                 init_modules[site_path_str] = get_module(str(site_path / "init.py"))
 
-        global_proxy.init = init_modules[site_path_str]
-        global_proxy.search_paths = get_search_paths(site_root, flask.request.path)
+        init = init_modules[site_path_str]
+        populate_param_dict(app, init)
+
         global_proxy.site_path = site_path
         global_proxy.request_time = time.time()
 
@@ -106,35 +112,47 @@ def setup_before_request(app, dir_map):
         global_proxy.module_chain = get_processors(flask.request.method)
 
         _, processor, _ = global_proxy.module_chain
-        if not processor:
+        if not processor or not flask.request.method.isupper():
             flask.abort(501)
+
+
+def populate_param_dict(app, init):
+
+    global_proxy.param_dict = {
+        "request": flask.request,
+        "init": init,
+        "g": flask.g,
+        "abort": flask.abort,
+        "render_template": flask.render_template,
+        "log": app.logger,
+        "session": flask.session,
+        "json": json,
+    }
 
 
 def setup_catch_all(app):
     @app.endpoint("index")
     @app.endpoint("catchall")
     def catch_all(path):  # pylint: disable=unused-argument
-        response = flask.Response()
+        response_in = flask.Response()
 
         for module in global_proxy.module_chain:
-            if module:
+            if module:  # always true for at least 1 module. otherwise before_request() would abort(501)
                 app.logger.debug(f"passing request to {module.__name__}")
                 start_time = time.time()
-                response = run_func_with_dict(
-                    {
-                        "request": flask.request,
-                        "response": response,
-                        "init": global_proxy.init,
-                        "g": flask.g,
-                        "log": app.logger,
-                        "flask": flask,
-                    },
+                this_param_dict = {
+                    "response": response_in,
+                }
+                response_out = run_func_with_dict(
+                    {**this_param_dict, **global_proxy.param_dict},
                     module.main,
                 )
+                assert response_out is response_in, "must return the same response passed in"
+                response_in = response_out  # for the next loop iteration
                 ms = round((time.time() - start_time) * 1000)
                 app.logger.debug(f"{module.__name__} completed in {ms}ms")
 
-        return response
+        return response_out
 
 
 def setup_after_request(app):
@@ -152,8 +170,13 @@ def setup_after_request(app):
         if app.wait_for_logs:
             while not app.log_queue.empty():
                 time.sleep(0.01)
-        local_manager.cleanup()
         return response
+
+
+def setup_teardown_request(app):
+    @app.teardown_request
+    def teardown_request(exc):
+        local_manager.cleanup()
 
 
 def setup_error_handler(app):
@@ -169,32 +192,26 @@ def setup_error_handler(app):
         custom_handler = get_http_error_handler(e.code)
         if not custom_handler:
             app.logger.debug(f"no custom handler registered for error {e.code}")
-            response = e.get_response()
+            response_out = e.get_response()
         else:
             app.logger.debug(f"using error handler: {custom_handler.__name__}")
             start_time = time.time()
-            response = run_func_with_dict(
-                {
-                    "request": flask.request,
-                    "e": e,
-                    "response": e.get_response(),
-                    "init": global_proxy.init,
-                    "g": flask.g,
-                    "log": app.logger,
-                    "flask": flask,
-                },
+            response_in = e.get_response()
+
+            this_param_dict = {
+                "e": e,
+                "response": response_in,
+            }
+
+            response_out = run_func_with_dict(
+                {**this_param_dict, **global_proxy.param_dict},
                 custom_handler.main,
             )
+            assert response_out is response_in, "must return the same response passed in"
             ms = round((time.time() - start_time) * 1000)
             app.logger.debug(f"{custom_handler.__name__} completed in {ms}ms")
 
-            # normalize the response variable into an actual flask response object
-            if isinstance(response, (str, dict, bytes)):
-                response = flask.make_response(response, e.code)
-            if isinstance(response, tuple):
-                response = flask.make_response(response)
-
-        return late_hook_hail_mary(app, response)
+        return late_hook_hail_mary(app, response_out)
 
 
 def late_hook_hail_mary(app, response):
@@ -202,31 +219,37 @@ def late_hook_hail_mary(app, response):
     # if the late_hook throws an exception, then then the copy is discarded and the original response is returned.
     # if late_hook succeeds, then the modified copy of the response is returned.
     _, _, late_hook = global_proxy.module_chain
-    if late_hook:
+    if not late_hook:
+        response_out = response
+    else:
         try:
             app.logger.debug(f"passing request to {late_hook.__name__}")
             start_time = time.time()
             # by making a copy first, we can be sure late_hook cannot alter the response unless it does not except
-            copy.deepcopy(response)
-            response = run_func_with_dict(
-                {
-                    "request": flask.request,
-                    "response": response,
-                    "init": global_proxy.init,
-                    "g": flask.g,
-                    "log": app.logger,
-                    "flask": flask,
-                },
+            response_in = copy.deepcopy(response)
+
+            this_param_dict = {
+                "response": response_in,
+            }
+
+            response_out = run_func_with_dict(
+                {**this_param_dict, **global_proxy.param_dict},
                 late_hook.main,
             )
+            assert response_out is response_in, "must return the same response passed in"
             ms = round((time.time() - start_time) * 1000)
             app.logger.debug(f"{late_hook.__name__} completed in {ms}ms")
         except Exception as x:
+            response_out = response
+
+            tb = x.__traceback__
+            while tb.tb_next:
+                tb = tb.tb_next
+
             app.logger.error(
-                f'Got exception "{x}" at line {x.__traceback__.tb_next.tb_lineno} '  # pylint: disable=no-member
-                f"in {late_hook.__name__}, continuing anyway"
+                f'Got exception "{x}" at line {tb.tb_lineno} ' f"in {late_hook.__name__}, continuing anyway"
             )
-    return response
+    return response_out
 
 
 def jinja_uptodate_closure(template):
@@ -267,22 +290,22 @@ def get_http_error_handler(error_code):
 
 def get_processors(http_method):
 
-    early_hook_file = find_processor_path([f"early_hook.{http_method}", "early_hook"])
-    early_hook = get_module(early_hook_file)
+    early_hook = get_module(find_processor_path([f"early.{http_method}", "early.default"]))
 
     if http_method == "GET":
         direct_path = global_proxy.search_paths[-1]
-        if os.path.isfile(direct_path) and not str(direct_path).endswith(".py"):
+        if (
+            os.path.isfile(direct_path)
+            and not str(direct_path).endswith(".py")
+            and str(pathlib.Path(direct_path).resolve()) == str(direct_path)
+        ):
             processor = directFileServe
         else:
-            processor_file = find_processor_path(["GET", ""])
-            processor = get_module(processor_file)
+            processor = get_module(find_processor_path(["GET", ""]))
     else:
-        processor_file = find_processor_path([f"{http_method}"])
-        processor = get_module(processor_file)
+        processor = get_module(find_processor_path([f"{http_method}"]))
 
-    late_hook_file = find_processor_path([f"late_hook.{http_method}", "late_hook"])
-    late_hook = get_module(late_hook_file)
+    late_hook = get_module(find_processor_path([f"late.{http_method}", "late.default"]))
 
     return (early_hook, processor, late_hook)
 
@@ -322,7 +345,6 @@ def run_func_with_dict(input_dict, func):
 class directFileServe:
     def main(response):
         # pylint: disable=no-self-argument
-        # no-member?
         direct_path = global_proxy.search_paths[-1]
         mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
 

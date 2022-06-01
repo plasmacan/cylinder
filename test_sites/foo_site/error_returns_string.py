@@ -1,2 +1,2 @@
-def main(flask, request, response, init, g, log):
-    flask.abort(418, "I am but a teapot, my friend")
+def main(request, response, init, g, log, abort):
+    abort(418, "I am but a teapot, my friend")
