@@ -12,7 +12,7 @@ jobs:
         '[
           "${{github.repository_owner}}",
           "grintor"
-          "dependabot"
+          "dependabot[bot]"
         ]'
     steps:
       - name: Print Context Info
