@@ -20,31 +20,47 @@ jobs:
           echo "github.event.action:" ${{github.event.action}}
           echo "github.actor:" ${{github.actor}}
 
-      - name: attempt checkout with PAT
-        # if we don't use a PAT, then the git push cannot trigger a push event
-        # if there is no push event, then the tests cannot run and auto-merge cannot happen
-        id: checkout_pat
-        uses: actions/checkout@v2
-        continue-on-error: true
-        with:
-          token: ${{ secrets.PAT }}
-
-      - name: fallback to checkout with GITHUB_TOKEN
-        if: steps.checkout_pat.outcome != 'success'
+      - name: checkout with GITHUB_TOKEN
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        id: setup-python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
+      - name: Cache pip modules...
+        id: cache-pip
+        uses: actions/cache@v3
+        with:
+          key: "pip-cache-\
+            ${{ runner.os }}-\
+            ${{ steps.setup-python.outputs.python-version }}-\
+            ${{ env.pythonLocation }}-\
+            ${{ hashFiles('requirements.txt') }}-\
+            ${{ hashFiles('requirements.in') }}"
+          path: |
+            ~/.cache/pip
+        #   ${{ env.pythonLocation }}
+
+      - name: Cache pre-commit...
+        id: cache-pre-commit
+        uses: actions/cache@v3
+        with:
+          key: "pre-commit-cache-\
+            ${{ runner.os }}-\
+            ${{ steps.setup-python.outputs.python-version }}-\
+            ${{ env.pythonLocation }}-\
+            ${{ hashFiles('.pre-commit-config.yaml') }}"
+          path: |
+            ~/.cache/pre-commit
+
       - name: Install dependencies
         run: |
-          #python -m pip install --upgrade pip
           pip install pip-tools
-          pip-compile requirements.in -q
+          pip-compile requirements.in -q --allow-unsafe --generate-hashes
           pip install -r requirements.txt
           sudo apt-get update -y
           sudo apt-get install -y aspell
