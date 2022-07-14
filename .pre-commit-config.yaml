@@ -123,9 +123,10 @@ repos:
         name: html validate
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    rev: v1.2.4
+    rev: v1.3.0
     hooks:
       - id: python-safety-dependencies-check
+        files: requirements.txt
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
     rev: v6.0.0
