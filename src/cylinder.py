@@ -18,7 +18,7 @@ import jinja2
 import waitress
 import werkzeug
 
-__version__ = "v0.0.5"
+__version__ = "v0.0.6"
 
 
 werkzeug_local = werkzeug.local.Local()
@@ -95,10 +95,14 @@ def setup_before_request(app, dir_map):
         populate_param_dict(app, init)
 
         global_proxy.site_path = site_path
-        global_proxy.request_time = time.time()
+        flask.request.start_time = time.time()
 
         # request_id required for logger (used in logger subclass)
-        global_proxy.request_id = f"req_{format(int(global_proxy.request_time*1000), 'X')}"
+        global_proxy.request_id = (
+            flask.request.headers.get("X-Request-ID")
+            or flask.request.headers.get("CF-Ray")
+            or f"req_{format(int(flask.request.start_time*1000), 'X')}"
+        )
 
         app.logger.debug(
             f"INCOMING_REQUEST: "
@@ -158,7 +162,7 @@ def setup_catch_all(app):
 def setup_after_request(app):
     @app.after_request
     def after_request(response):
-        ms = round((time.time() - global_proxy.request_time) * 1000)
+        ms = round((time.time() - flask.request.start_time) * 1000)
         app.logger.info(
             f"{flask.request.remote_addr} "
             f"{flask.request.method} "
