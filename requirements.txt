@@ -14,7 +14,7 @@ babel==2.10.1
     # via sphinx
 bleach==5.0.0
     # via readme-renderer
-certifi==2021.10.8
+certifi==2022.12.7
     # via requests
 cffi==1.15.0
     # via cryptography
@@ -180,7 +180,6 @@ tomli==2.0.1
     # via
     #   coverage
     #   pep517
-    #   pylint
     #   pytest
 twine==4.0.0
     # via -r requirements.in
