@@ -79,7 +79,9 @@ keyring==23.5.1
 lazy-object-proxy==1.7.1
     # via astroid
 markupsafe==2.1.1
-    # via jinja2
+    # via
+    #   jinja2
+    #   werkzeug
 mccabe==0.6.1
     # via pylint
 nodeenv==1.6.0
@@ -180,7 +182,6 @@ tomli==2.0.1
     # via
     #   coverage
     #   pep517
-    #   pylint
     #   pytest
 twine==4.0.0
     # via -r requirements.in
@@ -194,7 +195,7 @@ waitress==2.1.2
     # via -r requirements.in
 webencodings==0.5.1
     # via bleach
-werkzeug==2.1.2
+werkzeug==2.2.3
     # via flask
 wheel==0.37.1
     # via pip-tools
