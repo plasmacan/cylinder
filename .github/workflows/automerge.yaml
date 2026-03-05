@@ -6,12 +6,16 @@ jobs:
   automerge_job:
     name: automerge job
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
     env:
       # append additional users to the USER_ALLOWLIST to allow automerge for them
       USER_ALLOWLIST: |
         '[
           "${{github.repository_owner}}",
-          "dependabot[bot]"
+          "dependabot[bot]",
+          "grintor"
         ]'
     steps:
       - name: Print Context Info
