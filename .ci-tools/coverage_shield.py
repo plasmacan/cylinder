@@ -25,7 +25,7 @@ def main():
         ]
     )
 
-    with open(".repo-reports/coverage.json", "r", encoding="utf-8") as f:
+    with open(".repo-reports/coverage.json", encoding="utf-8") as f:
         coverage_result = json.loads(f.read())
 
     os.unlink(".repo-reports/coverage.json")

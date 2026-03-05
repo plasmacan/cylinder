@@ -27,9 +27,9 @@ jobs:
 
       - name: Set up Python
         id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.13"
 
       - name: Cache pip modules...
         id: cache-pip
@@ -59,6 +59,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
+          pip install --force-reinstall setuptools virtualenv packaging
           pip install pip-tools
           pip-compile requirements.in -q --allow-unsafe --generate-hashes
           pip install -r requirements.txt

@@ -37,7 +37,7 @@ def get_app(dir_map, log_level=logging.DEBUG, secret_key=None, log_queue_length=
     app.url_map.add(werkzeug.routing.Rule("/", defaults={"path": "/"}, endpoint="index"))
     app.url_map.add(werkzeug.routing.Rule("/<path:path>", endpoint="catchall"))
 
-    log_formatter = logFormatter(
+    log_formatter = LogFormatter(
         "%(levelname)s [%(asctime)s] %(filename)s:%(lineno)s %(request_id)s\n    %(message)s\n",
         "%Y-%m-%d %H:%M:%S.uuu%z",
     )
@@ -47,7 +47,7 @@ def get_app(dir_map, log_level=logging.DEBUG, secret_key=None, log_queue_length=
     app.log_queue = EvictQueue(log_queue_length)
     queue_listener = logging.handlers.QueueListener(app.log_queue, log_handler, respect_handler_level=True)
     root_logger = logging.getLogger()
-    root_logger.handlers = [customQueueHandler(app.log_queue)]
+    root_logger.handlers = [CustomQueueHandler(app.log_queue)]
     root_logger.setLevel(log_level)
     queue_listener.start()
 
@@ -56,11 +56,11 @@ def get_app(dir_map, log_level=logging.DEBUG, secret_key=None, log_queue_length=
 
     flask.abort = werkzeug.exceptions.Aborter(
         extra={
-            301: redirectMovedPermanently,
-            302: redirectFound,
-            303: redirectSeeOther,
-            307: redirectTemporaryRedirect,
-            308: redirectPermanentRedirect,
+            301: RedirectMovedPermanently,
+            302: RedirectFound,
+            303: RedirectSeeOther,
+            307: RedirectTemporaryRedirect,
+            308: RedirectPermanentRedirect,
         }
     )
 
@@ -101,7 +101,7 @@ def setup_before_request(app, dir_map):
         global_proxy.request_id = (
             flask.request.headers.get("X-Request-ID")
             or flask.request.headers.get("CF-Ray")
-            or f"req_{format(int(flask.request.start_time*1000), 'X')}"
+            or f"req_{format(int(flask.request.start_time * 1000), 'X')}"
         )
 
         app.logger.debug(
@@ -137,7 +137,7 @@ def populate_param_dict(app, init):
 def setup_catch_all(app):
     @app.endpoint("index")
     @app.endpoint("catchall")
-    def catch_all(path):  # pylint: disable=unused-argument
+    def catch_all(path):
         response_in = flask.Response()
 
         for module in global_proxy.module_chain:
@@ -179,12 +179,12 @@ def setup_after_request(app):
 
 def setup_teardown_request(app):
     @app.teardown_request
-    def teardown_request(excpt):  # pylint: disable=unused-argument
+    def teardown_request(_exception):
         local_manager.cleanup()
 
 
 def setup_error_handler(app):
-    @app.errorhandler(redirectCustomClass)
+    @app.errorhandler(RedirectCustomClass)
     def http_redirect(e):
         app.logger.debug(f"abort redirect {e.code} raised.")
         response = flask.make_response("", e.code, {"Location": e.description})
@@ -250,9 +250,7 @@ def late_hook_hail_mary(app, response):
             while tb.tb_next:
                 tb = tb.tb_next
 
-            app.logger.error(
-                f'Got exception "{x}" at line {tb.tb_lineno} ' f"in {late_hook.__name__}, continuing anyway"
-            )
+            app.logger.error(f'Got exception "{x}" at line {tb.tb_lineno} in {late_hook.__name__}, continuing anyway')
     return response_out
 
 
@@ -271,7 +269,7 @@ def jinja_uptodate_closure(template):
 def jinja_loader_function(name):
     template = global_proxy.site_path / "templates" / name
     if os.path.exists(template):
-        with open(template, "r", encoding="UTF-8") as f:
+        with open(template, encoding="UTF-8") as f:
             template_content = f.read()
         uptodate_func = jinja_uptodate_closure(template)
         return (template_content, name, uptodate_func)
@@ -303,7 +301,7 @@ def get_processors(http_method):
             and not str(direct_path).endswith(".py")
             and str(pathlib.Path(direct_path).resolve()) == str(direct_path)
         ):
-            processor = directFileServe
+            processor = DirectFileServe
         else:
             processor = get_module(find_processor_path(["GET", ""]))
     else:
@@ -346,9 +344,9 @@ def run_func_with_dict(input_dict, func):
     return func(*input_list)
 
 
-class directFileServe:
+class DirectFileServe:
+    @staticmethod
     def main(response):
-        # pylint: disable=no-self-argument
         direct_path = global_proxy.search_paths[-1]
         mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
 
@@ -362,7 +360,7 @@ class directFileServe:
         return response
 
 
-class customQueueHandler(logging.handlers.QueueHandler):
+class CustomQueueHandler(logging.handlers.QueueHandler):
     """Extend QueueHandler to attach Flask request context to record since
     request context won't be available inside listener thread.
     """
@@ -375,8 +373,8 @@ class customQueueHandler(logging.handlers.QueueHandler):
         return record
 
 
-class logFormatter(logging.Formatter):
-    def formatTime(self, record, datefmt=None):
+class LogFormatter(logging.Formatter):
+    def format_time(self, record, datefmt=None):
         formatted_time = time.strftime(datefmt, self.converter(record.created))
         formatted_time = formatted_time.replace("uuu", datetime.fromtimestamp(record.created).strftime("%f")[0:3])
         return formatted_time
@@ -396,35 +394,35 @@ class EvictQueue(queue.Queue):
                 self.get_nowait()
 
 
-class redirectCustomClass(werkzeug.exceptions.HTTPException):
+class RedirectCustomClass(werkzeug.exceptions.HTTPException):
     description = "/"  # set description to redirect URL
 
 
-class redirectMovedPermanently(redirectCustomClass):
+class RedirectMovedPermanently(RedirectCustomClass):
     # Permanent, POST MAY become GET
     code = 301
     name = "Moved Permanently"
 
 
-class redirectFound(redirectCustomClass):
+class RedirectFound(RedirectCustomClass):
     # Temporary, POST MAY become GET
     code = 302
     name = "Found"
 
 
-class redirectSeeOther(redirectCustomClass):
+class RedirectSeeOther(RedirectCustomClass):
     # Temporary, POST WILL become GET
     code = 303
     name = "See Other"
 
 
-class redirectTemporaryRedirect(redirectCustomClass):
+class RedirectTemporaryRedirect(RedirectCustomClass):
     # Temporary, POST WILL NOT become GET
     code = 307
     name = "Temporary Redirect"
 
 
-class redirectPermanentRedirect(redirectCustomClass):
+class RedirectPermanentRedirect(RedirectCustomClass):
     # Permanent, POST WILL NOT become GET
     code = 308
     name = "Permanent Redirect"

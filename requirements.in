@@ -1,15 +1,15 @@
 pytest
-pylint
 pyenchant
-pylint_requests
 requests
 coverage
 pre-commit
 Sphinx
 sphinx-rtd-theme
 recommonmark
+ruff
 pytest-cov
 pip-tools
 flask
 waitress
 twine
+pyyaml

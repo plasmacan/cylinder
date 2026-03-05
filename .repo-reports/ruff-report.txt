@@ -1,0 +1,2 @@
+output from ruff check:
+All checks passed!

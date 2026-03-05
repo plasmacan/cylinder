@@ -6,9 +6,7 @@ import sys
 
 sys.path.append(os.getcwd())
 
-import src.cylinder  # pylint: disable=wrong-import-position
-
-# flake8: noqa:T001
+import src.cylinder
 
 code_version = src.cylinder.__version__
 
@@ -49,7 +47,7 @@ if code_version != release_version:
 shutil.rmtree("dist", ignore_errors=True)
 shutil.rmtree("build", ignore_errors=True)
 
-subprocess.run(["python", "setup.py", "sdist", "bdist_wheel"], check=True)
+subprocess.run(["python", "-m", "build"], check=True)
 subprocess.run(["twine", "check", "dist/*"], check=True)
 subprocess.run(["twine", "check", "dist/*"], check=True)
 subprocess.run(

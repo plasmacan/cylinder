@@ -1,31 +1,34 @@
-import io
 import json
-
-from pylint.lint import Run
-from pylint.reporters.text import TextReporter
+import subprocess
 
 
 def main():
 
-    with io.StringIO() as f:
-        results = Run(
-            [".", "--recursive=y", "--rcfile", ".pylintrc.ini"],
-            reporter=TextReporter(f),
-            exit=False,
-        )
-        report = f.getvalue()
+    result = subprocess.run(
+        ["ruff", "check", ".", "--output-format", "concise"],
+        capture_output=True,
+        text=True,
+    )
+    report = result.stdout + result.stderr
 
-    average_score = round(results.linter.stats.global_note, 1)
-    problems_path = ".repo-reports/pylint-report.txt"
+    warning_count = sum(
+        1 for line in result.stdout.splitlines() if line.strip() and not line.startswith("Found") and ":" in line
+    )
+
+    problems_path = ".repo-reports/ruff-report.txt"
     with open(problems_path, "w+", encoding="utf-8", newline="\n") as f:
-        f.write("output from recursive pylint:\n")
+        f.write("output from ruff check:\n")
         f.write(report)
 
-    score_color = "red"
-    if average_score > 9:
-        score_color = "yellow"
-    if average_score > 9.5:
+    if warning_count == 0:
         score_color = "#34D058"
+        message = "0 warnings"
+    elif warning_count <= 5:
+        score_color = "yellow"
+        message = f"{warning_count} warnings"
+    else:
+        score_color = "red"
+        message = f"{warning_count} warnings"
 
     shield_path = ".repo-shields/quality_shield.json"
     with open(shield_path, "w+", encoding="utf-8", newline="\n") as f:
@@ -34,13 +37,13 @@ def main():
                 {
                     "schemaVersion": 1,
                     "label": "code quality",
-                    "message": f"{average_score}/10",
+                    "message": message,
                     "color": score_color,
                 },
             )
         )
 
-    return average_score
+    return warning_count
 
 
 if __name__ == "__main__":
