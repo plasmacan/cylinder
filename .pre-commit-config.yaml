@@ -16,8 +16,10 @@ repos:
     rev: v0.15.1
     hooks:
       - id: ruff-check
+        exclude: (?x)^( tests/ | test_sites/)
         args: [--fix]
       - id: ruff-format
+        exclude: (?x)^( tests/ | test_sites/)
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.0
@@ -46,7 +48,7 @@ repos:
         fail_fast: true # applies to check-yaml as well as every hook below
       - id: name-tests-test
       - id: no-commit-to-branch
-        stages: [commit]
+        stages: [pre-commit]
 
   - repo: local
     hooks:
