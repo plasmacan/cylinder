@@ -12,3 +12,4 @@ pip-tools
 waitress
 twine
 pyyaml
+werkzeug
