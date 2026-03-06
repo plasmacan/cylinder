@@ -7,7 +7,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "Hello World"
+project = "cylinder"
 author = "Chris Wheeler"
 release = "0.1"
 

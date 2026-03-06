@@ -1,9 +1,9 @@
 output from ruff check:
-test_sites/_run_local.py:12:1: E402 Module level import not at top of file
-test_sites/foo_site.eh.post.py:4:12: F821 Undefined name `response`
-test_sites/foo_site/bad_syntax.ex.get.py:2:7: invalid-syntax: Expected an expression
-test_sites/foo_site/bad_syntax.ex.get.py:3:5: invalid-syntax: Expected an indented block after `if` statement
-tests/cylinder_test.py:115:5: F841 Local variable `response` is assigned to but never used
-tests/cylinder_test.py:335:9: F841 Local variable `tiny_queue_app` is assigned to but never used
+test_sites\_run_local.py:12:1: E402 Module level import not at top of file
+test_sites\foo_site.eh.post.py:4:12: F821 Undefined name `response`
+test_sites\foo_site\bad_syntax.ex.get.py:2:7: invalid-syntax: Expected an expression
+test_sites\foo_site\bad_syntax.ex.get.py:3:5: invalid-syntax: Expected an indented block after `if` statement
+tests\cylinder_test.py:115:5: F841 Local variable `response` is assigned to but never used
+tests\cylinder_test.py:335:9: F841 Local variable `tiny_queue_app` is assigned to but never used
 Found 6 errors.
 No fixes available (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
