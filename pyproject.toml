@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cylinder"
 dynamic = ["version"]
-description = "A web application framework and webserver based on Flask and Waitress"
+description = "A web application micro framework based werkzeug"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
 classifiers = [
@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-dependencies = ["flask", "waitress"]
+dependencies = ["werkzeug"]
 
 [[project.authors]]
 name = "Chris Wheeler"
