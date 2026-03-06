@@ -13,3 +13,4 @@ flask
 waitress
 twine
 pyyaml
+werkzeug

@@ -1,7 +1,9 @@
 import pathlib
 import sys
 import time
-
+from src import cylinder
+import logging
+from test_sites import init as inittest
 
 def test_root_tripple(foo_site_client):
     # run twice so that the init_modules cache is non-empty at least once
@@ -26,18 +28,41 @@ def test_root_tripple(foo_site_client):
     assert response.headers["Late_hook"] == "good"
     assert response.status_code == 200
 
+def test_g(foo_site_client):
+    # confirms g can be reused from hook to hook within a single request
+    # confirms that g doesn't leak data between requests
+    response = foo_site_client.get("g_test/1")
+    assert b'early hook executed' in response.data
+    assert b'1 executed' in response.data
+    response = foo_site_client.get("g_test/2")
+    assert b'2 executed' in response.data
+    assert b'early hook executed' not in response.data
+    assert b'1 executed' not in response.data
+    
+def test_reserved_method(foo_site_client):
+    response = foo_site_client.open("/", method="DEFAULT")
+    assert response.status_code == 500
+    assert b"is reserved" in response.data
+
+def test_bad_method_case(foo_site_client):
+    response = foo_site_client.open("/", method="f12")
+    assert response.status_code == 500
+    print(response.data)
+    assert b"only alpha" in response.data
 
 def test_bad_case(foo_site_client):
     response = foo_site_client.get("/bad_case")
     assert response.status_code == 404
 
+def test_bad_case_direct(foo_site_client):
+    response = foo_site_client.get("/bad_case.Get.py")
+    assert response.status_code == 404
 
 def test_exception(foo_site_client):
     response = foo_site_client.get("/an_exception")
     assert response.headers["Late_hook"] == "good"
     assert response.status_code == 500
     assert b"division by zero" in response.data
-
 
 def test_redirect(foo_site_client):
     response = foo_site_client.get("/a_redirect")
@@ -57,6 +82,26 @@ def test_csv(foo_site_client):
     assert b"static csv" in response.data
     assert response.status_code == 200
 
+def test_req_id(caplog):
+    def app_map_func(request, g):
+        return "test_sites", "foo_site", {'init': inittest}
+    
+    foo_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler)
+    foo_site_client = foo_site_app.test_client()
+    response = foo_site_client.get("/", headers={'X-Request-ID': 'custom_req'})
+    assert foo_site_app.global_proxy.request_id == 'custom_req'
+    
+    foo_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler, request_id_header=None)
+    foo_site_client = foo_site_app.test_client()
+    response = foo_site_client.get("/")
+    assert foo_site_app.global_proxy.request_id.startswith('req_')
+    
+    foo_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler, request_id_header='CF-Ray')
+    foo_site_client = foo_site_app.test_client()
+    response = foo_site_client.get("/", headers={'CF-Ray': 'custom_req2'})
+    assert foo_site_app.global_proxy.request_id == 'custom_req2'
+    
+    
 
 def test_txt(foo_site_client):
     response = foo_site_client.get("/static.txt")
@@ -85,14 +130,20 @@ def test_txt_gz(foo_site_client):
     assert b"static.txt" in response.data
     assert response.status_code == 200
 
-
-def test_faulty_late_hook(foo_site_client, caplog):
-    response = foo_site_client.get("/faulty_late_hook")
-    assert "Late_hook" not in response.headers
+def test_early_hook_returns_string(foo_site_client):
+    response = foo_site_client.delete("/early_delete")
     assert response.status_code == 500
-    assert b"division by zero" in response.data
-    assert "continuing anyway" in caplog.text
+    assert b"return the same response passed in" in response.data
 
+def test_late_hook_returns_string(foo_site_client):
+    response = foo_site_client.put("/faulty_late_hook")
+    assert response.status_code == 500
+    assert b"return the same response passed in" in response.data
+
+def test_custom_raise(foo_site_client):
+    response = foo_site_client.get("/custom_raise")
+    assert response.status_code == 599
+    assert b"My custom abort exception" in response.data
 
 def test_custom_raise_override(foo_site_client):
     response = foo_site_client.get("/custom_raise_override")
@@ -143,6 +194,16 @@ def test_broken_template(foo_site_client):
     assert response.status_code == 500
     assert b"9usdhf9ubsd.html" in response.data
 
+def test_early_abort(foo_site_client):
+    response = foo_site_client.post("/early_post")
+    assert response.status_code == 405
+    
+    
+    
+def test_bad_syntax(foo_site_client):
+    response = foo_site_client.get("/bad_syntax")
+    assert response.status_code == 500
+    assert b"invalid syntax" in response.data
 
 def test_py_bypass(foo_site_client):
     response = foo_site_client.get("/faulty_late_hook.py")
@@ -161,6 +222,12 @@ def test_not_implemented(foo_site_client):
     assert b"Not Implemented" in response.data
 
 
+def test_return_string(foo_site_client):
+    response = foo_site_client.get("/return_string")
+    assert response.headers["Late_hook"] == "good"
+    assert response.status_code == 500
+    assert b"return the same response passed in" in response.data
+    
 def test_error_returns_string(foo_site_client):
     response = foo_site_client.get("/error_returns_string")
     assert response.headers["Late_hook"] == "good"
@@ -194,7 +261,13 @@ def test_no_hook_fail_site(no_hook_fail_site_client):
     assert b"there is an error in the application" in response.data
 
 
-def test_request_wait(minimum_site_app, capsys):
+def test_request_wait(capsys):
+    
+    def app_map_func(request, g):
+        return "test_sites", "minimum_site", {}
+        
+    minimum_site_app = cylinder.get_app(app_map_func, logging.DEBUG)
+    
     minimum_site_app.wait_for_logs = True
     test_client = minimum_site_app.test_client()
     test_client.get("/test")
@@ -212,7 +285,13 @@ def test_request_wait(minimum_site_app, capsys):
     assert len(captured2.err) == 0
 
 
-def test_request_nowait(minimum_site_app, capsys):
+def test_request_nowait(capsys):
+    
+    def app_map_func(request, g):
+        return "test_sites", "minimum_site", {}
+        
+    minimum_site_app = cylinder.get_app(app_map_func, logging.DEBUG)
+    
     minimum_site_app.wait_for_logs = False
     test_client = minimum_site_app.test_client()
     test_client.get("/test")
@@ -229,8 +308,20 @@ def test_request_nowait(minimum_site_app, capsys):
 
     assert len(captured1.err) < len(captured2.err)
 
+def test_invalid_app_map(capsys):
+    try:
+        tiny_queue_app = cylinder.get_app('app_map', logging.DEBUG, log_queue_length=1)
+        assert False, 'there should be a ValueError exception'
+    except ValueError as e:
+        assert "app_map must be a function" in str(e)
 
-def test_logger_full(tiny_queue_app, capsys):
+
+def test_logger_full(capsys):
+    
+    def app_map_func(request, g):
+        return "test_sites", "minimum_site", {}
+
+    tiny_queue_app = cylinder.get_app(app_map_func, logging.DEBUG, log_queue_length=1)
 
     # the buffer only holds 1, this test fills is up
     log = tiny_queue_app.logger
@@ -243,3 +334,53 @@ def test_logger_full(tiny_queue_app, capsys):
 
     captured = capsys.readouterr()
     assert len(captured.err.splitlines()) < 10  # lines had to be dropped if buffer was full
+    assert len(captured.err.splitlines()) > 0
+
+def test_faulty_late_hook(caplog):
+    def app_map_func(request, g):
+        return "test_sites", "foo_site", {'init': inittest}
+    
+    foo_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler)
+    foo_site_client = foo_site_app.test_client()
+
+    response = foo_site_client.get("/faulty_late_hook")
+    
+    assert "Late_hook" not in response.headers
+    assert response.status_code == 500
+    assert b"division by zero" in response.data
+
+    foo_site_app.log_queue.join()
+    
+    print(f"{caplog.text=} {foo_site_app.log_queue=}")
+
+def test_late_redirect(foo_site_client, no_hook_fail_site_client):
+    response = foo_site_client.get("/late_redir")
+    assert not response.headers.get("Late_hook")
+    assert response.status_code == 301
+    assert response.headers["Location"] == "/"
+    
+    response = no_hook_fail_site_client.get("/a_redirect")
+    assert response.status_code == 307
+    assert response.headers["Location"] == "http://www.google.com/"
+
+
+def test_late_redirect_no_late_hook(no_hook_fail_site_client):
+    response = no_hook_fail_site_client.get("/early_redirect")
+    assert response.status_code == 307
+    assert response.headers["Location"] == "http://www.yahoo.com/"
+    
+
+def test_late_abort():
+
+    def app_map_func(request, g):
+        return "test_sites", "foo_site", {'init': inittest}
+    
+    foo_site_app = cylinder.get_app(app_map_func)
+    foo_site_client = foo_site_app.test_client()
+
+    response = foo_site_client.get("/late_abort")
+    foo_site_app.log_queue.join()
+    
+    assert response.status_code == 401
+    assert b"not today" in response.data
+    assert foo_site_app.global_proxy.g.late_hook_run_count == 1, 'late hook should only run once'
