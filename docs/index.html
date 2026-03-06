@@ -1,20 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Plasma Cylinder &mdash; Hello World 0.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
   
-        <script data-url_root="#" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19645805"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex/" />
     <link rel="search" title="Search" href="search/" />
@@ -27,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="contents/" class="icon icon-home"> Hello World
+
+          
+          
+          <a href="contents/" class="icon icon-home">
+            Hello World
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search/" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -67,8 +72,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="contents/" class="icon icon-home"></a> &raquo;</li>
-      <li>Plasma Cylinder</li>
+      <li><a href="contents/" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Plasma Cylinder</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -78,11 +83,11 @@
            <div itemprop="articleBody">
              
   <section id="plasma-cylinder">
-<h1>Plasma Cylinder<a class="headerlink" href="#plasma-cylinder" title="Permalink to this headline"></a></h1>
+<h1>Plasma Cylinder<a class="headerlink" href="#plasma-cylinder" title="Link to this heading"></a></h1>
 <p>Plasma Cylinder is a web application framework and webserver built atop <a class="reference external" href="https://github.com/pallets/flask">flask</a> and <a class="reference external" href="https://github.com/Pylons/waitress">waitress</a>. It is designed to be
 production-ready, extraordinarily easy to learn, and to encourage a project layout which facilitates collaboration.</p>
 <section id="features">
-<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline"></a></h2>
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
 <p>Plasma Cylinder is designed to allow web application to grow organically while remaining manageable. Similar to PHP
 on Apache, inbound requests are routed to to the file in the webroot who’s path corresponds to the path in the URL.
 Unlike PHP on Apache, POST requests are routed to different files than GET requests, keeping logic better segmented
@@ -97,7 +102,7 @@ lambda using <a class="reference external" href="https://github.com/zappa/Zappa"
 development environment can be used in production directly.</p>
 </section>
 <section id="getting-started">
-<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline"></a></h2>
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
 <p>Simply install Plasma Cylinder with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">cylinder</span></code> and create the required minimum directory structure.</p>
 <p>A minimum viable web app looks like this:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/my_server
@@ -108,15 +113,15 @@ development environment can be used in production directly.</p>
 </pre></div>
 </div>
 <p>here is <code class="docutils literal notranslate"><span class="pre">myserver.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">cylinder</span> <span class="c1"># pip install cylinder</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span> <span class="c1"># pip install cylinder</span>
 
 
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">triage</span><span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.42&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">triage</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">triage</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
     <span class="c1"># here you can examine the incoming request and decide to route to different webapps</span>
     <span class="c1"># depending on the hostname for example</span>
 
@@ -128,7 +133,7 @@ development environment can be used in production directly.</p>
 </pre></div>
 </div>
 <p>here is <code class="docutils literal notranslate"><span class="pre">webapp1.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
     <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;Hello World!&#39;</span>
     <span class="k">return</span> <span class="n">response</span>
 </pre></div>
@@ -140,7 +145,7 @@ development environment can be used in production directly.</p>
 <p>Full and more complex examples can be found in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory in the repository.</p>
 </section>
 <section id="contributing">
-<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline"></a></h2>
+<h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
 <p>Pull requests welcome. Please read <a class="reference internal" href="general/contributing/#contributing-to-plasma-cylinder"><span class="std std-ref">the contributing guide</span></a></p>
 </section>
 </section>
