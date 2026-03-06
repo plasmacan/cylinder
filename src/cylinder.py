@@ -5,10 +5,11 @@ import mimetypes
 import os
 import pathlib
 import queue
+import sys
 import time
 from datetime import datetime
 from types import SimpleNamespace
-import sys
+
 import werkzeug
 import werkzeug.local
 import werkzeug.test
@@ -23,10 +24,17 @@ log_formatter = logging.Formatter(
     "%Y-%m-%d %H:%M:%S%z",
 )
 
-def get_app(app_map, log_level=logging.DEBUG, log_handler=None, request_id_header='X-Request-ID', log_queue_length=1000):
+
+def get_app(
+    app_map,
+    log_level=logging.DEBUG,
+    log_handler=None,
+    request_id_header="X-Request-ID",
+    log_queue_length=1000,
+):
     if not callable(app_map):
         raise ValueError("app_map must be a function")
-    
+
     if not log_handler:
         log_handler = logging.StreamHandler(sys.stderr)
 
@@ -35,13 +43,12 @@ def get_app(app_map, log_level=logging.DEBUG, log_handler=None, request_id_heade
         log_queue_length=log_queue_length,
         log_handler=log_handler,
     )
-   
-    
+
     def app(environ, start_response):
         request = werkzeug.wrappers.Request(environ)
         werkzeug_local.global_proxy = SimpleNamespace()
         global_proxy.g = SimpleNamespace()
-        
+
         app.abort = werkzeug.exceptions.Aborter(
             extra={
                 301: RedirectMovedPermanently,
@@ -51,9 +58,11 @@ def get_app(app_map, log_level=logging.DEBUG, log_handler=None, request_id_heade
                 308: RedirectPermanentRedirect,
             }
         )
-        
+
         # app_map can be defined with or without the 'g' parameter
-        site_dir, site_name, appended_args = run_func_with_dict({'request': request, 'g': global_proxy.g}, app_map)
+        site_dir, site_name, appended_args = run_func_with_dict(
+            {"request": request, "g": global_proxy.g}, app_map
+        )
 
         site_path = pathlib.Path.cwd() / site_dir
         site_root = site_path / site_name
@@ -68,10 +77,12 @@ def get_app(app_map, log_level=logging.DEBUG, log_handler=None, request_id_heade
 
         global_proxy.site_path = site_path
         request.start_time = time.time()
-        
-        global_proxy.request_id = request.headers.get(request_id_header) or \
-            f"req_{format(int(request.start_time * 1000000), 'X')[::-1]}"
-        
+
+        global_proxy.request_id = (
+            request.headers.get(request_id_header)
+            or f"req_{format(int(request.start_time * 1000000), 'X')[::-1]}"
+        )
+
         logger.debug(
             "INCOMING_REQUEST: %s %s %s %s",
             request.remote_addr,
@@ -79,37 +90,48 @@ def get_app(app_map, log_level=logging.DEBUG, log_handler=None, request_id_heade
             request.url,
             request.environ.get("SERVER_PROTOCOL", ""),
         )
-        
+
         global_proxy.module_chain = None, None, None
         module = None
         late_hook = None
         try:
             global_proxy.module_chain = get_processors(request.method)
             _, _, late_hook = global_proxy.module_chain
-            if not global_proxy.module_chain[1]: app.abort(501)
+            if not global_proxy.module_chain[1]:
+                app.abort(501)
 
             response = werkzeug.wrappers.Response()
 
             for module in global_proxy.module_chain:
-                response = process_module(module, response, global_proxy.param_dict | appended_args, logger)
+                response = process_module(
+                    module, response, global_proxy.param_dict | appended_args, logger
+                )
             return response(environ, start_response)
-            
-            
+
         except RedirectCustomClass as e:
             logger.debug("abort redirect %s raised.", e.code)
-            response = werkzeug.wrappers.Response("", e.code, {"Location": e.description})
+            response = werkzeug.wrappers.Response(
+                "", e.code, {"Location": e.description}
+            )
 
             if module and module is late_hook:
                 return response(environ, start_response)
 
             if late_hook:
-                response = process_module(late_hook, response, global_proxy.param_dict | appended_args | {'e': e}, logger)
+                response = process_module(
+                    late_hook,
+                    response,
+                    global_proxy.param_dict | appended_args | {"e": e},
+                    logger,
+                )
                 response(environ, start_response)
-            
+
             return response(environ, start_response)
 
-
-        except (werkzeug.exceptions.HTTPException, werkzeug.exceptions.InternalServerError) as ex:
+        except (
+            werkzeug.exceptions.HTTPException,
+            werkzeug.exceptions.InternalServerError,
+        ) as ex:
             response = ex.get_response()
             ex_code = response.status_code
             logger.debug("abort code %s raised.", ex_code)
@@ -119,49 +141,65 @@ def get_app(app_map, log_level=logging.DEBUG, log_handler=None, request_id_heade
             else:
                 try:
                     # an exception in the exception handler becomes a 500 error
-                    response = process_module(custom_handler, response, global_proxy.param_dict | appended_args | {'e': ex}, logger)
+                    response = process_module(
+                        custom_handler,
+                        response,
+                        global_proxy.param_dict | appended_args | {"e": ex},
+                        logger,
+                    )
                 except werkzeug.exceptions.InternalServerError as e:
-                    response = process_module(get_http_error_handler(500), e.get_response(), global_proxy.param_dict | appended_args | {'e': e}, logger)
+                    response = process_module(
+                        get_http_error_handler(500),
+                        e.get_response(),
+                        global_proxy.param_dict | appended_args | {"e": e},
+                        logger,
+                    )
 
             if module and module is late_hook:
                 return response(environ, start_response)
-            
+
             if late_hook:
-                response = process_module(late_hook, response, global_proxy.param_dict | appended_args | {'e': ex}, logger)
-            
+                response = process_module(
+                    late_hook,
+                    response,
+                    global_proxy.param_dict | appended_args | {"e": ex},
+                    logger,
+                )
+
             return response(environ, start_response)
-        
+
         finally:
-            logger.info("%s %s %s %s | %s | request completed in %s ms",
+            logger.info(
+                "%s %s %s %s | %s | request completed in %s ms",
                 request.remote_addr,
                 request.method,
                 request.url,
-                request.environ.get('SERVER_PROTOCOL', ''),
+                request.environ.get("SERVER_PROTOCOL", ""),
                 response.status,
-                round((time.time() - request.start_time) * 1000)
+                round((time.time() - request.start_time) * 1000),
             )
 
             if app.wait_for_logs:
                 app.log_queue.join()
 
-
     def test_client():
         return werkzeug.test.Client(app)
-        
+
     app.logger = logger
     app.log_queue = log_queue
     app.log_listener = log_listener
     app.wait_for_logs = False
     app.test_client = test_client
     app.global_proxy = global_proxy
-    
+
     logger.debug("Plasma cylinder energized. Awaiting requests.")
-    
+
     return app
 
+
 def configure_logging(log_level, log_queue_length, log_handler):
-    log_queue = getattr(configure_logging, 'log_queue', None)
-    log_listener = getattr(configure_logging, 'log_listener', None)
+    log_queue = getattr(configure_logging, "log_queue", None)
+    log_listener = getattr(configure_logging, "log_listener", None)
 
     if log_listener:
         log_listener.stop()
@@ -177,21 +215,21 @@ def configure_logging(log_level, log_queue_length, log_handler):
     logger.setLevel(log_level)
     logger.handlers.clear()
     logger.addHandler(CustomQueueHandler(log_queue))
-    
-    setattr(configure_logging, 'log_queue', log_queue)
-    setattr(configure_logging, 'log_listener', log_listener)
-    
+
+    setattr(configure_logging, "log_queue", log_queue)
+    setattr(configure_logging, "log_listener", log_listener)
+
     return logger, log_queue, log_listener
+
 
 def process_module(module, response, params, logger):
     params = params | {"response": response}
-    if not module: return response
+    if not module:
+        return response
     logger.debug("passing request to %s", module.__name__)
     start_time = time.time()
     try:
-        response = validate_response(response, run_func_with_dict(
-            params, module.main
-        ))
+        response = validate_response(response, run_func_with_dict(params, module.main))
     except Exception as e:
         if isinstance(e, werkzeug.exceptions.HTTPException):
             raise e
@@ -201,10 +239,12 @@ def process_module(module, response, params, logger):
     logger.debug("%s completed in %s ms", module.__name__, ms)
     return response
 
+
 def validate_response(response_in, response_out):
     if response_out is not response_in:
         raise ValueError("must return the same response passed in")
     return response_out
+
 
 def get_module(path):
     if not path:
@@ -222,27 +262,33 @@ def get_http_error_handler(error_code):
 
 def get_processors(http_method):
     try:
-        if http_method == 'DEFAULT':
+        if http_method == "DEFAULT":
             raise ValueError('custom HTTP method "DEFAULT" is reserved')
         if not http_method.isalpha():
-            raise ValueError('only alpha HTTP methods are supported')
-        
+            raise ValueError("only alpha HTTP methods are supported")
+
         lower_method = http_method.lower()
-        
-        early_hook = get_module(find_processor_path([f"eh.{lower_method}", "eh.default"]))
-            
+
+        early_hook = get_module(
+            find_processor_path([f"eh.{lower_method}", "eh.default"])
+        )
+
         direct_path = global_proxy.search_paths[-1]
         if (
-            http_method == 'GET'
+            http_method == "GET"
             and os.path.isfile(direct_path)
             and not str(direct_path).endswith(".py")
             and str(pathlib.Path(direct_path).resolve()) == str(direct_path)
         ):
             processor = DirectFileServe
         else:
-            processor = get_module(find_processor_path([f"ex.{lower_method}", "default"]))
+            processor = get_module(
+                find_processor_path([f"ex.{lower_method}", "default"])
+            )
 
-        late_hook = get_module(find_processor_path([f"lh.{lower_method}", "lh.default"]))
+        late_hook = get_module(
+            find_processor_path([f"lh.{lower_method}", "lh.default"])
+        )
 
         return (early_hook, processor, late_hook)
 
@@ -255,7 +301,10 @@ def find_processor_path(suffix_list):
         for suffix in suffix_list:
             potential_file = f"{path}.{suffix}.py"
             # pathlib .resolve() is here to handle the case-insensitivity of windows. Enforces case to match
-            if os.path.isfile(potential_file) and str(pathlib.Path(potential_file).resolve()) == potential_file:
+            if (
+                os.path.isfile(potential_file)
+                and str(pathlib.Path(potential_file).resolve()) == potential_file
+            ):
                 return potential_file
     return None
 
@@ -280,6 +329,7 @@ def run_func_with_dict(input_dict, func):
 
 
 class DirectFileServe:
+    @staticmethod
     def main(response):
         direct_path = global_proxy.search_paths[-1]
         mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
@@ -303,12 +353,13 @@ class CustomQueueHandler(logging.handlers.QueueHandler):
         try:
             record.request_id = global_proxy.request_id
         except Exception:
-            record.request_id = ''
-            
+            record.request_id = ""
+
         dt = datetime.fromtimestamp(record.created).astimezone()
         record.timestamp = dt.isoformat(timespec="microseconds")
-            
+
         return record
+
 
 class EvictQueue(queue.Queue):
     # drops oldest items when full
@@ -326,25 +377,30 @@ class EvictQueue(queue.Queue):
 class RedirectCustomClass(werkzeug.exceptions.HTTPException):
     description = "/"  # set description to redirect URL
 
+
 class RedirectMovedPermanently(RedirectCustomClass):
     # Permanent, POST MAY become GET
     code = 301
     name = "Moved Permanently"
+
 
 class RedirectFound(RedirectCustomClass):
     # Temporary, POST MAY become GET
     code = 302
     name = "Found"
 
+
 class RedirectSeeOther(RedirectCustomClass):
     # Temporary, POST WILL become GET
     code = 303
     name = "See Other"
 
+
 class RedirectTemporaryRedirect(RedirectCustomClass):
     # Temporary, POST WILL NOT become GET
     code = 307
     name = "Temporary Redirect"
+
 
 class RedirectPermanentRedirect(RedirectCustomClass):
     # Permanent, POST WILL NOT become GET

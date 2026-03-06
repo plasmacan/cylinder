@@ -12,7 +12,9 @@ def main():
     report = result.stdout + result.stderr
 
     warning_count = sum(
-        1 for line in result.stdout.splitlines() if line.strip() and not line.startswith("Found") and ":" in line
+        1
+        for line in result.stdout.splitlines()
+        if line.strip() and not line.startswith("Found") and ":" in line
     )
 
     problems_path = ".repo-reports/ruff-report.txt"

@@ -1,7 +1,9 @@
 import werkzeug
 
+
 def main(request, response, init, g, log, abort):
     raise AbortCustom
+
 
 class AbortCustom(werkzeug.exceptions.HTTPException):
     code = 599

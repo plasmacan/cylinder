@@ -5,7 +5,7 @@ def main(request, response, init, g, log, render_template, abort):
 
     if request.path == "/":
         response.data = render_template("hello.html", name="Chris")
-        response.content_type = 'text/HTML; charset=utf-8'
+        response.content_type = "text/HTML; charset=utf-8"
         assert init.foo == "bar"
         return response
     else:

@@ -1,2 +1,2 @@
 def main(abort):
-    return 'text'
+    return "text"
