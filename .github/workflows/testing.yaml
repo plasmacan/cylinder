@@ -12,6 +12,8 @@ concurrency:
 jobs:
   code_testing_job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     name: code testing job
     steps:
       - name: print context info
