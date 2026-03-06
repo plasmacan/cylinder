@@ -62,6 +62,7 @@ subprocess.run(
         "__token__",
         "--password",
         os.environ["PYPI_KEY"],
+        "--verbose",
     ],
     check=True,
 )
