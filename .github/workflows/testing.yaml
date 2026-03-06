@@ -64,7 +64,7 @@ jobs:
           pip install --upgrade pip
           pip install --force-reinstall setuptools virtualenv packaging
           pip install pip-tools
-          pip-compile requirements.in -q --generate-hashes --strip-extras
+          pip-compile requirements.in -q --generate-hashes --strip-extras --allow-unsafe
           pip install -r requirements.txt
           sudo apt-get update -y
           sudo apt-get install -y aspell
