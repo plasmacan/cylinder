@@ -14,7 +14,7 @@ import werkzeug
 import werkzeug.local
 import werkzeug.test
 
-__version__ = "v0.1.1"
+__version__ = "v0.1.2"
 
 werkzeug_local = werkzeug.local.Local()
 global_proxy = werkzeug_local("global_proxy")
@@ -46,7 +46,7 @@ def get_app(
     )
 
     def app(environ, start_response):
-        request = werkzeug.wrappers.Request(environ)
+        request = werkzeug.wrappers.Request(environ, shallow=True)
         werkzeug_local.global_proxy = SimpleNamespace()
         global_proxy.g = SimpleNamespace()
 
@@ -99,13 +99,14 @@ def get_app(
         late_hook = None
         try:
             global_proxy.module_chain = get_processors(request.method)
-            _, _, late_hook = global_proxy.module_chain
+            early_hook, _, late_hook = global_proxy.module_chain
             if not global_proxy.module_chain[1]:
                 app.abort(501)
 
             for module in global_proxy.module_chain:
+                shallow_request = module is early_hook
                 response = process_module(
-                    module, response, global_proxy.param_dict | appended_args, logger
+                    module, response, global_proxy.param_dict | appended_args, logger, shallow_request
                 )
             return response(environ, start_response)
 
@@ -221,10 +222,12 @@ def configure_logging(log_level, log_queue_length, log_handler):
     return logger, log_queue, log_listener
 
 
-def process_module(module, response, params, logger):
+def process_module(module, response, params, logger, shallow_request=False):
     params = params | {"response": response}
     if not module:
         return response
+    request = params["request"]
+    request.shallow = shallow_request
     logger.debug("passing request to %s", module.__name__)
     start_time = time.time()
     try:

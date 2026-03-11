@@ -10,6 +10,8 @@ def main(request, response, init, g, log, abort):
         else:
             abort(308, new_base_url)
 
+    assert request.shallow == True
+
     # also for setting things on a response
     response.access_control_allow_origin = "*"
     response.access_control_allow_methods = "*"
