@@ -58,8 +58,7 @@ def get_app(
                 307: RedirectTemporaryRedirect,
                 308: RedirectPermanentRedirect,
             }
-            | abort_extra
-            or {}
+            | (abort_extra or {})
         )
 
         global_proxy.param_dict = {
