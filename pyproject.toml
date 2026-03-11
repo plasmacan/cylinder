@@ -41,14 +41,50 @@ version = {attr = "cylinder.__version__"}
 
 [tool.ruff]
 target-version = "py313"
+line-length = 107 # 107 is the Github diff-view line-wrap limit on a 1080 monitor at 1x zoom
 exclude = [
     "tests/*",
     "test_sites/*",
+	".ci-tools/*"
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "N"]
-ignore = ["E501"]  # line too long (handled by formatter)
+select = [
+    "E", "F", "W",      # pycodestyle / pyflakes
+    "A",                # redefined builtins
+    "C90",              # mccabe / too-complex
+    "PLE", "PLW", "PLR",# pylint error / warning / refactor
+    "COM818",           # trailing-comma-tuple equivalent
+    "B006", "B015", "B018",  # dangerous-default-value / pointless-statement-ish
+]
+ignore = [
+    "E203",    # keep formatter-compatible whitespace behavior
+    "E402",    # flake8 ignored this
+    "E501",    # line too long handled by formatter
+    "F401",    # flake8 ignored unused imports
+
+    "PLR0911", # too-many-return-statements
+    "PLR0913", # too-many-arguments
+    "PLR1714", # consider-using-in
+    "PLR1716", # chained-comparison
+    "PLW1510", # subprocess-run-check
+]
+dummy-variable-rgx = "_$|dummy"
+task-tags = ["FIXME", "XXX", "TODO"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 16
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-positional-args = 5
+max-locals = 30
+max-returns = 6
+max-branches = 20
+max-statements = 70
+max-public-methods = 20
+max-bool-expr = 5
+max-nested-blocks = 5
 
 [tool.ruff.lint.isort]
 known-first-party = ["cylinder"]

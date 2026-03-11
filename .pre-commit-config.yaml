@@ -37,7 +37,8 @@ repos:
     rev: v8.16.0
     hooks:
       - id: eslint
-        additional_dependencies: [eslint@8.15.0, eslint-config-prettier@8.5.0, eslint-plugin-no-unsanitized@4.0.1]
+        additional_dependencies:
+          [eslint@8.15.0, eslint-config-prettier@8.5.0, eslint-plugin-no-unsanitized@4.0.1]
         args: [--fix]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -82,7 +83,8 @@ repos:
     rev: 0.0.2
     hooks:
       - id: stylelint
-        additional_dependencies: [stylelint@14.8.2, stylelint-config-standard@25.0.0, stylelint-config-prettier@9.0.3]
+        additional_dependencies:
+          [stylelint@14.8.2, stylelint-config-standard@25.0.0, stylelint-config-prettier@9.0.3]
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks-java
     rev: 1.3.10
