@@ -14,7 +14,7 @@ import werkzeug
 import werkzeug.local
 import werkzeug.test
 
-__version__ = "v0.1.0"
+__version__ = "v0.1.1"
 
 werkzeug_local = werkzeug.local.Local()
 global_proxy = werkzeug_local("global_proxy")
@@ -31,6 +31,7 @@ def get_app(
     log_handler=None,
     request_id_header="X-Request-ID",
     log_queue_length=1000,
+    abort_extra=None,
 ):
     if not callable(app_map):
         raise ValueError("app_map must be a function")
@@ -57,16 +58,9 @@ def get_app(
                 307: RedirectTemporaryRedirect,
                 308: RedirectPermanentRedirect,
             }
+            | abort_extra
+            or {}
         )
-
-        # app_map can be defined with or without the 'g' parameter
-        site_dir, site_name, appended_args = run_func_with_dict(
-            {"request": request, "g": global_proxy.g}, app_map
-        )
-
-        site_path = pathlib.Path.cwd() / site_dir
-        site_root = site_path / site_name
-        global_proxy.search_paths = get_search_paths(site_root, request.path)
 
         global_proxy.param_dict = {
             "request": request,
@@ -74,6 +68,16 @@ def get_app(
             "abort": app.abort,
             "log": logger,
         }
+
+        response = werkzeug.wrappers.Response()
+
+        site_dir, site_name, appended_args = run_func_with_dict(
+            {"response": response} | global_proxy.param_dict, app_map
+        )
+
+        site_path = pathlib.Path.cwd() / site_dir
+        site_root = site_path / site_name
+        global_proxy.search_paths = get_search_paths(site_root, request.path)
 
         global_proxy.site_path = site_path
         request.start_time = time.time()
@@ -100,8 +104,6 @@ def get_app(
             if not global_proxy.module_chain[1]:
                 app.abort(501)
 
-            response = werkzeug.wrappers.Response()
-
             for module in global_proxy.module_chain:
                 response = process_module(
                     module, response, global_proxy.param_dict | appended_args, logger
@@ -110,9 +112,7 @@ def get_app(
 
         except RedirectCustomClass as e:
             logger.debug("abort redirect %s raised.", e.code)
-            response = werkzeug.wrappers.Response(
-                "", e.code, {"Location": e.description}
-            )
+            response = werkzeug.wrappers.Response("", e.code, {"Location": e.description})
 
             if module and module is late_hook:
                 return response(environ, start_response)
@@ -269,9 +269,7 @@ def get_processors(http_method):
 
         lower_method = http_method.lower()
 
-        early_hook = get_module(
-            find_processor_path([f"eh.{lower_method}", "eh.default"])
-        )
+        early_hook = get_module(find_processor_path([f"eh.{lower_method}", "eh.default"]))
 
         direct_path = global_proxy.search_paths[-1]
         if (
@@ -282,13 +280,9 @@ def get_processors(http_method):
         ):
             processor = DirectFileServe
         else:
-            processor = get_module(
-                find_processor_path([f"ex.{lower_method}", "default"])
-            )
+            processor = get_module(find_processor_path([f"ex.{lower_method}", "default"]))
 
-        late_hook = get_module(
-            find_processor_path([f"lh.{lower_method}", "lh.default"])
-        )
+        late_hook = get_module(find_processor_path([f"lh.{lower_method}", "lh.default"]))
 
         return (early_hook, processor, late_hook)
 
