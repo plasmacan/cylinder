@@ -84,24 +84,27 @@
              
   <section id="plasma-cylinder">
 <h1>Plasma Cylinder<a class="headerlink" href="#plasma-cylinder" title="Link to this heading"></a></h1>
-<p>Plasma Cylinder is a web application framework and webserver built atop <a class="reference external" href="https://werkzeug.palletsprojects.com/en/2.1.x/serving/">werkzeug</a>. It is designed to be
-production-ready, extraordinarily easy to learn, and to encourage a project layout which facilitates collaboration.</p>
+<p>Plasma Cylinder is a web application framework and webserver built atop
+<a class="reference external" href="https://werkzeug.palletsprojects.com/en/2.1.x/serving/">werkzeug</a>. It is designed to be production-ready,
+extraordinarily easy to learn, and to encourage a project layout which facilitates collaboration.</p>
 <section id="features">
 <h2>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
-<p>Plasma Cylinder is designed to allow web application to grow organically while remaining manageable. Similar to PHP
-on Apache, inbound requests are routed to to the file in the webroot whose path corresponds to the path in the URL.
-Unlike PHP on Apache, POST requests are routed to different files than GET requests, keeping logic better segmented
-and minimizing the chance of a merge conflict when multiple contributors are working together. Also unlike Apache,
-there is no separation between between configuration syntax and code. The server is configured purely in python,
-keeping configuration simple yet powerful.</p>
-<p>Initialization of resources can persist across requests
-without needing a plugin. Any objects created can be made persistently accessible across all requests. (such as
-database connections). In certain situations, this can really speed things up.</p>
-<p>Since Plasma Cylinder is based on werkzeug, it serves a <a class="reference external" href="https://wsgi.readthedocs.io/en/latest/">WSGI</a> web application.</p>
+<p>Plasma Cylinder is designed to allow web application to grow organically while remaining manageable.
+Similar to PHP on Apache, inbound requests are routed to the file in the webroot whose path corresponds to
+the path in the URL. Unlike PHP on Apache, POST requests are routed to different files than GET requests,
+keeping logic better segmented and minimizing the chance of a merge conflict when multiple contributors are
+working together. Also unlike Apache, there is no separation between configuration syntax and code. The
+server is configured purely in python, keeping configuration simple yet powerful.</p>
+<p>Initialization of resources can persist across requests without needing a plugin. Any objects created can
+be made persistently accessible across all requests (such as database connections). In certain situations,
+this can really speed things up.</p>
+<p>Since Plasma Cylinder is based on werkzeug, it serves a <a class="reference external" href="https://wsgi.readthedocs.io/en/latest/">WSGI</a> web
+application.</p>
 </section>
 <section id="getting-started">
 <h2>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
-<p>Simply install Plasma Cylinder with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">cylinder</span></code> and create the required minimum directory structure.</p>
+<p>Simply install Plasma Cylinder with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">cylinder</span></code> and create the required minimum directory
+structure.</p>
 <p>A minimum viable web app looks like this:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/my_server
     |-- myserver.py
@@ -110,41 +113,35 @@ database connections). In certain situations, this can really speed things up.</
         |-- webapp1.py
 </pre></div>
 </div>
-<p>here is <code class="docutils literal notranslate"><span class="pre">myserver.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span> <span class="c1"># pip install cylinder</span>
+<p>Here is <code class="docutils literal notranslate"><span class="pre">myserver.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>  <span class="c1"># pip install cylinder</span>
 
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">triage</span><span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.42&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
 
-
-<span class="k">def</span><span class="w"> </span><span class="nf">triage</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">triage</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
     <span class="c1"># here you can examine the incoming request and decide to route to different webapps</span>
     <span class="c1"># depending on the hostname for example</span>
 
     <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span>
 
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>here is <code class="docutils literal notranslate"><span class="pre">webapp1.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
-    <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;Hello World!&#39;</span>
+<p>Here is <code class="docutils literal notranslate"><span class="pre">webapp1.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="s2">&quot;Hello World!&quot;</span>
     <span class="k">return</span> <span class="n">response</span>
-</pre></div>
-</div>
-<p>here is <code class="docutils literal notranslate"><span class="pre">init.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># init is empty for now</span>
 </pre></div>
 </div>
 <p>Full and more complex examples can be found in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory in the repository.</p>
 </section>
 <section id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
-<p>Pull requests welcome. Please read <a class="reference internal" href="general/contributing/#contributing-to-plasma-cylinder"><span class="std std-ref">the contributing guide</span></a></p>
+<p>Pull requests welcome. Please read
+<a class="reference internal" href="general/contributing/#contributing-to-plasma-cylinder"><span class="std std-ref">the contributing guide</span></a></p>
 </section>
 </section>
 
