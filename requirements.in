@@ -5,7 +5,7 @@ coverage
 pre-commit
 Sphinx
 sphinx-rtd-theme
-recommonmark
+myst-parser
 ruff
 pytest-cov
 pip-tools
