@@ -31,7 +31,7 @@ def main():
 def app_map(request, g):
     return (
         this_file_directory,
-        "foo_site",
+        "minimum_site",
         {"init": init, "render_template": render_template},
     )
 

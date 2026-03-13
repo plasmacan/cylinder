@@ -73,7 +73,7 @@ dummy-variable-rgx = "_$|dummy"
 task-tags = ["FIXME", "XXX", "TODO"]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 16
+max-complexity = 15
 
 [tool.ruff.lint.pylint]
 max-args = 5
