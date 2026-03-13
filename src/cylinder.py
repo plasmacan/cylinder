@@ -9,6 +9,7 @@ import sys
 import time
 from datetime import datetime
 from types import SimpleNamespace
+import traceback
 
 import werkzeug
 import werkzeug.local
@@ -25,6 +26,7 @@ log_formatter = logging.Formatter(
 )
 
 
+# ruff: disable[C901, PLR0915]
 def get_app(
     app_map,
     log_level=logging.DEBUG,
@@ -138,6 +140,8 @@ def get_app(
             custom_handler = get_http_error_handler(ex_code)
             if not custom_handler:
                 logger.debug("no custom handler registered for error %s", ex_code)
+                if ex_code == 500:  # noqa: PLR2004
+                    logger.error("".join(traceback.format_exception(ex)))
             else:
                 try:
                     # an exception in the exception handler becomes a 500 error
@@ -148,8 +152,11 @@ def get_app(
                         logger,
                     )
                 except werkzeug.exceptions.InternalServerError as e:
+                    custom_handler = get_http_error_handler(500)
+                    if not custom_handler:
+                        logger.error("".join(traceback.format_exception(e)))
                     response = process_module(
-                        get_http_error_handler(500),
+                        custom_handler,
                         e.get_response(),
                         global_proxy.param_dict | appended_args | {"e": e},
                         logger,

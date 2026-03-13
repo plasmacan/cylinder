@@ -12,7 +12,7 @@ sys.path.insert(0, str(this_file_directory.parent))
 import src.cylinder as cylinder
 
 jinja_env = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(f"{this_file_directory / 'templates'}"),
+    loader=jinja2.FileSystemLoader('templates'),
     auto_reload=True,
     autoescape=jinja2.select_autoescape(),
 )
@@ -31,7 +31,7 @@ def main():
 def app_map(request, g):
     return (
         this_file_directory,
-        "foo_site",
+        "minimum_site",
         {"init": init, "render_template": render_template},
     )
 

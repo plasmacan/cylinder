@@ -275,6 +275,33 @@ def test_minimum_site(minimum_site_client):
     assert response.status_code == 200
     assert b"hello world" in response.data
 
+def test_minimum_site_exception(caplog):
+    def app_map_func(request, g):
+        return "test_sites", "minimum_site", {"init": inittest}
+
+    minimum_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler)
+    minimum_site_client = minimum_site_app.test_client()
+
+    response = minimum_site_client.get("/except")
+    minimum_site_app.log_queue.join()
+
+    assert response.status_code == 500
+    assert 'division by zero' in caplog.text
+
+
+def test_minimum_site_exception_in_exception_handler(caplog):
+    def app_map_func(request, g):
+        return "test_sites", "minimum_site", {"init": inittest}
+
+    minimum_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler)
+    minimum_site_client = minimum_site_app.test_client()
+
+    response = minimum_site_client.get("/except2")
+    minimum_site_app.log_queue.join()
+
+    assert response.status_code == 500
+    assert 'division by zero' in caplog.text
+
 
 def test_no_hook_fail_site(no_hook_fail_site_client):
     response = no_hook_fail_site_client.get("/")

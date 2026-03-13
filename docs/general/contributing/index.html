@@ -78,26 +78,26 @@
              
   <section id="contributing-to-plasma-cylinder">
 <h1>Contributing to Plasma Cylinder<a class="headerlink" href="#contributing-to-plasma-cylinder" title="Link to this heading"></a></h1>
-<p>Plasma Cylinder uses <a class="reference external" href="https://github.com/pre-commit/pre-commit">pre-commit</a> to enforce the the coding standards. This is enforced in CI, but should be set up
-locally as well.</p>
+<p>Plasma Cylinder uses (<a class="reference external" href="https://github.com/pre-commit/pre-commit">pre-commit</a> to enforce the the coding
+standards. This is enforced in CI, but should be set up locally as well.</p>
 <p>Minimum system requirements are:</p>
 <ul class="simple">
-<li><p>Java 8</p></li>
-<li><p>Ruby 2.7</p></li>
-<li><p>Python 3.7</p></li>
+<li><p>Java 8+</p></li>
+<li><p>Ruby 2.7+</p></li>
+<li><p>Python 3.8+</p></li>
 </ul>
 <p>After installing the prerequisites, enter the repo directory and create a new python virtual environment
 using <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">venv</span> <span class="pre">venv</span></code></p>
-<p>Enter the virtual environment using <code class="docutils literal notranslate"><span class="pre">./venv/Scripts/activate</span></code>
-(or <code class="docutils literal notranslate"><span class="pre">.\venv\Scripts\activate</span></code> on windows)</p>
+<p>Enter the virtual environment using <code class="docutils literal notranslate"><span class="pre">./venv/Scripts/activate</span></code> (or <code class="docutils literal notranslate"><span class="pre">.\venv\Scripts\activate</span></code> on windows)</p>
 <p>From within the virtual environment, install the requirements <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code></p>
 <p>Now, set up the pre-commit hook using <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">install</span></code></p>
 <p>To confirm all of the hooks work, run <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">run</span> <span class="pre">-a</span></code></p>
-<p>Before pushing, make sure to run <code class="docutils literal notranslate"><span class="pre">pytest</span></code>. Running that command will not only perform all of the functional tests,
-but will also build a test copy of the documentation (this documentation: which you are reading now) and produce a
-beautiful HTML coverage report. Both of these will be located in the <code class="docutils literal notranslate"><span class="pre">.repo-reports</span></code> directory.</p>
-<p>Pytest is also run in CI. A failing test will block a merge, so make sure the tests are passing before making a
-pull request.</p>
+<p>Before pushing, make sure to run <code class="docutils literal notranslate"><span class="pre">pytest</span></code>. Running that command will not only perform all of the functional
+tests, but will also build a test copy of the documentation (this documentation: which you are reading now)
+and produce a beautiful HTML coverage report. Both of these will be located in the <code class="docutils literal notranslate"><span class="pre">.repo-reports</span></code>
+directory.</p>
+<p>Pytest is also run in CI. A failing test will block a merge, so make sure the tests are passing before
+making a pull request.</p>
 </section>
 
 
