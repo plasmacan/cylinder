@@ -13,14 +13,14 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=19645805"></script>
+      <script src="_static/documentation_options.js?v=2709fde1"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex/" />
-    <link rel="search" title="Search" href="search/" />
-    <link rel="next" title="Contributing to Plasma Cylinder" href="general/contributing/" />
-    <link rel="prev" title="Table Of Contents" href="contents/" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing to Plasma Cylinder" href="general/contributing.html" />
+    <link rel="prev" title="Table Of Contents" href="contents.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -31,11 +31,11 @@
 
           
           
-          <a href="contents/" class="icon icon-home">
+          <a href="contents.html" class="icon icon-home">
             cylinder
           </a>
 <div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search/" method="get">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
@@ -52,6 +52,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#the-parameters-on-main">The parameters on main()</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#raising-abort-exceptions">Raising abort() exceptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exception-handlers">Exception Handlers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-uncaught-exceptions">Handling Uncaught Exceptions:</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
@@ -60,11 +61,11 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="general/contributing/">Contributing to Plasma Cylinder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/contributing.html">Contributing to Plasma Cylinder</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Site Map</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="contents/">Table Of Contents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents.html">Table Of Contents</a></li>
 </ul>
 
         </div>
@@ -73,14 +74,14 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="contents/">cylinder</a>
+          <a href="contents.html">cylinder</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="contents/" class="icon icon-home" aria-label="Home"></a></li>
+      <li><a href="contents.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Plasma Cylinder</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -345,11 +346,40 @@ to output JSON errors like above.</p>
 </pre></div>
 </div>
 </section>
+<section id="handling-uncaught-exceptions">
+<h3>Handling Uncaught Exceptions:<a class="headerlink" href="#handling-uncaught-exceptions" title="Link to this heading"></a></h3>
+<p>The web at large already has a standard error code to uncaught exceptions: <code class="docutils literal notranslate"><span class="pre">500</span></code> - For that reason, you shouldn’t raise a 500 error using <code class="docutils literal notranslate"><span class="pre">abort()</span></code>. Instead, use the more specific codes like 501 or 503.</p>
+<p>When an uncaught exception is raised, this will make it’s way to your 500 error handler as the <code class="docutils literal notranslate"><span class="pre">e</span></code> parameter and type
+<a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/exceptions/#werkzeug.exceptions.InternalServerError">werkzeug.exceptions.InternalServerError</a>
+which contains a <code class="docutils literal notranslate"><span class="pre">.original_exception</span></code> attribute containing the uncaught exception.</p>
+<p>You could use this to do interesting things like send alerts on uncaught exceptions. Here’s an example of a 500 handler that will just output the traceback of all uncaught exceptions in the HTTP response:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- webapp1.500.py        &lt;===== will handle all uncaught exceptions
+        |-- /webapp1
+            |-- foo.400.py
+            |-- /foo
+                |-- bar.ex.get.py
+</pre></div>
+</div>
+<p>here’s the content of webapp1.500.py:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+    <span class="n">tb_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">original_exception</span><span class="p">))</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">content_type</span><span class="o">=</span><span class="s1">&#39;text/plain; charset=UTF-8&#39;</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">tb_str</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
 <p>Pull requests welcome. Please read
-<a class="reference internal" href="general/contributing/#contributing-to-plasma-cylinder"><span class="std std-ref">the contributing guide</span></a></p>
+<a class="reference internal" href="general/contributing.html#contributing-to-plasma-cylinder"><span class="std std-ref">the contributing guide</span></a></p>
 </section>
 </section>
 
@@ -357,8 +387,8 @@ to output JSON errors like above.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="contents/" class="btn btn-neutral float-left" title="Table Of Contents" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="general/contributing/" class="btn btn-neutral float-right" title="Contributing to Plasma Cylinder" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="contents.html" class="btn btn-neutral float-left" title="Table Of Contents" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="general/contributing.html" class="btn btn-neutral float-right" title="Contributing to Plasma Cylinder" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
