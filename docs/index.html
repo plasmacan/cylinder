@@ -52,6 +52,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#the-parameters-on-main">The parameters on main()</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#raising-abort-exceptions">Raising abort() exceptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exception-handlers">Exception Handlers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-uncaught-exceptions">Handling Uncaught Exceptions</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
@@ -342,6 +343,38 @@ to output JSON errors like above.</p>
             |-- foo.400.py        &lt;===== will handle all 400 abort()&#39;s under /foo/
             |-- /foo
                 |-- bar.ex.get.py
+</pre></div>
+</div>
+</section>
+<section id="handling-uncaught-exceptions">
+<h3>Handling Uncaught Exceptions<a class="headerlink" href="#handling-uncaught-exceptions" title="Link to this heading"></a></h3>
+<p>The web at large already has a standard error code to uncaught exceptions: <code class="docutils literal notranslate"><span class="pre">500</span></code> - For that reason, you
+shouldn’t raise a 500 error using <code class="docutils literal notranslate"><span class="pre">abort()</span></code>. Instead, use the more specific codes like 501 or 503.</p>
+<p>When an uncaught exception is raised, this will make it’s way to your 500 error handler as the <code class="docutils literal notranslate"><span class="pre">e</span></code>
+parameter and type
+<a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/exceptions/#werkzeug.exceptions.InternalServerError">werkzeug.exceptions.InternalServerError</a>
+which contains a <code class="docutils literal notranslate"><span class="pre">.original_exception</span></code> attribute containing the uncaught exception.</p>
+<p>You could use this to do interesting things like send alerts on uncaught exceptions. Here’s an example of a
+500 handler that will just output the traceback of all uncaught exceptions in the HTTP response:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- webapp1.500.py        &lt;===== will handle all uncaught exceptions
+        |-- /webapp1
+            |-- foo.400.py
+            |-- /foo
+                |-- bar.ex.get.py
+</pre></div>
+</div>
+<p>here’s the content of webapp1.500.py:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+    <span class="n">tb_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">original_exception</span><span class="p">))</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">content_type</span><span class="o">=</span><span class="s1">&#39;text/plain; charset=UTF-8&#39;</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">tb_str</span>
+    <span class="k">return</span> <span class="n">response</span>
 </pre></div>
 </div>
 </section>

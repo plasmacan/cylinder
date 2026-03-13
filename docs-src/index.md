@@ -304,6 +304,43 @@ Implementing multiple handlers based on URL path is done like so:
                 |-- bar.ex.get.py
 ```
 
+### Handling Uncaught Exceptions
+
+The web at large already has a standard error code to uncaught exceptions: `500` - For that reason, you
+shouldn't raise a 500 error using `abort()`. Instead, use the more specific codes like 501 or 503.
+
+When an uncaught exception is raised, this will make it's way to your 500 error handler as the `e`
+parameter and type
+[werkzeug.exceptions.InternalServerError](https://werkzeug.palletsprojects.com/en/stable/exceptions/#werkzeug.exceptions.InternalServerError)
+which contains a `.original_exception` attribute containing the uncaught exception.
+
+You could use this to do interesting things like send alerts on uncaught exceptions. Here's an example of a
+500 handler that will just output the traceback of all uncaught exceptions in the HTTP response:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- webapp1.500.py        <===== will handle all uncaught exceptions
+        |-- /webapp1
+            |-- foo.400.py
+            |-- /foo
+                |-- bar.ex.get.py
+```
+
+here's the content of webapp1.500.py:
+
+```python
+import traceback
+
+def main(response, e):
+    tb_str = ''.join(traceback.format_exception(e.original_exception))
+    response.content_type='text/plain; charset=UTF-8'
+    response.data=tb_str
+    return response
+```
+
 ## Contributing
 
 Pull requests welcome. Please read
