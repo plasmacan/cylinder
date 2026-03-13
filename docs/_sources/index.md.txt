@@ -204,6 +204,12 @@ later.
 `e` is an additional parameter not shown above which the framework can sometimes pass into main(), but
 that's specific to exception handlers (`e` is the exception object).
 
+These are all of the parameters _the framework_ will pass into your `main()` functions. But you can include
+arbitrary additional params using the app_map() function described [above](#quickstart). That's discussed
+more in the section [The extra parameters on main()](#the-extra-parameters-on-main).
+
+But first let's talk more about `e`
+
 ### Raising abort() exceptions
 
 As discussed in the
@@ -340,6 +346,156 @@ def main(response, e):
     response.data=tb_str
     return response
 ```
+
+### The extra parameters on main()
+
+As discussed above, `main()` can receive the parameters `request`, `response`, `log`, `abort`, `g`, and `e`
+from the framework, and can do so in no particular order.
+
+What make cylinder particularly powerful is the ability to also receive arbitrary parameters defined by the
+developer as well. These are specified in the `app_map()` response. In the example [above](#quickstart)
+`app_map()` returns `"my_webapps", "webapp1", {}` - the webroot folder, the webapp name, and an empty dict.
+
+That empty dict specifies extra parameters that `main()` can receive at any point in the web app. For
+example, above we've imported the `traceback` module and `json` module for use in some error handlers. If
+we've found ourselves importing a module often and we wanted to shorthand this, you could pull that module
+in as a parameter instead:
+
+```python
+import cylinder  # pip install cylinder
+import waitress # pip install waitress
+import json
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1", {'json': json}
+
+if __name__ == "__main__":
+    main()
+```
+
+Now that `json` is defined in the parameter dict, any page in webapp1 can use it as a parameter to
+`main()`.
+
+Meaning instead of this:
+
+```python
+import json
+
+def main(request, response):
+    response.data=json.dumps({
+        'message': 'hello world',
+        'status': 200,
+        'error': False
+    })
+    return response
+```
+
+You could do this:
+
+```python
+def main(request, response, json):
+    response.data=json.dumps({
+        'message': 'hello world',
+        'status': 200,
+        'error': False
+    })
+    return response
+```
+
+Similarly, if you would prefer to use the convention `main(request, response, logger)` instead of
+`main(request, response, log)` you could do something like this:
+
+```python
+import cylinder  # pip install cylinder
+import waitress # pip install waitress
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request, log):
+    return "my_webapps", "webapp1", {'logger': log}
+
+if __name__ == "__main__":
+    main()
+```
+
+### HTML templates and jinja2
+
+[The extra parameters on main()](#the-extra-parameters-on-main) allow for unlimited extensibility, and are
+the reason cylinder doesn't ship with a template engine integrated: because implementing it yourself is
+very simple, here's `cylinder_main.py`:
+
+```python
+import cylinder  # pip install cylinder
+import waitress # pip install waitress
+import jinja2 # pip install Jinja2
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1", {'render_template': render_template}
+
+jinja_env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader('templates'),
+    auto_reload=True,
+    autoescape=jinja2.select_autoescape(),
+)
+
+def render_template(template_name, **context):
+    t = jinja_env.get_template(template_name)
+    return t.render(context)
+
+if __name__ == "__main__":
+    main()
+```
+
+And just like that you have a `render_template` parameter on `main()` that behaves like
+[the one in Flask](https://flask.palletsprojects.com/en/stable/api/#flask.render_template)
+
+In the **cylinder_main.py** above, we specified the `templates` folder as the location of our template
+files, so here's what that would look like in practice:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /templates
+        |-- hello.html
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+```
+
+Here's `webapp1.ex.get.py`:
+
+```python
+def main(response, render_template):
+    response.data = render_template("hello.html", name="Developer")
+    response.content_type = "text/HTML; charset=utf-8"
+    return response
+```
+
+Here's `hello.html`:
+
+```html
+<!doctype html>
+<html>
+    <body>
+        hello, {{name}}
+    </body>
+</html>
+```
+
+And now, as expected, visiting / of the site outputs "Hello, Developer"
+
+### Using Database Connections and ORMs like SQLAlchemy
+
+Just as you can...
 
 ## Contributing
 

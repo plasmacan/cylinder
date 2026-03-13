@@ -13,14 +13,14 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=19645805"></script>
+      <script src="_static/documentation_options.js?v=2709fde1"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex/" />
-    <link rel="search" title="Search" href="search/" />
-    <link rel="next" title="Contributing to Plasma Cylinder" href="general/contributing/" />
-    <link rel="prev" title="Table Of Contents" href="contents/" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing to Plasma Cylinder" href="general/contributing.html" />
+    <link rel="prev" title="Table Of Contents" href="contents.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -31,11 +31,11 @@
 
           
           
-          <a href="contents/" class="icon icon-home">
+          <a href="contents.html" class="icon icon-home">
             cylinder
           </a>
 <div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search/" method="get">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
@@ -53,6 +53,9 @@
 <li class="toctree-l3"><a class="reference internal" href="#raising-abort-exceptions">Raising abort() exceptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exception-handlers">Exception Handlers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#handling-uncaught-exceptions">Handling Uncaught Exceptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-extra-parameters-on-main">The extra parameters on main()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#html-templates-and-jinja2">HTML templates and jinja2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-database-connections-and-orms-like-sqlalchemy">Using Database Connections and ORMs like SQLAlchemy</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
@@ -61,11 +64,11 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="general/contributing/">Contributing to Plasma Cylinder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/contributing.html">Contributing to Plasma Cylinder</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Site Map</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="contents/">Table Of Contents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents.html">Table Of Contents</a></li>
 </ul>
 
         </div>
@@ -74,14 +77,14 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="contents/">cylinder</a>
+          <a href="contents.html">cylinder</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="contents/" class="icon icon-home" aria-label="Home"></a></li>
+      <li><a href="contents.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Plasma Cylinder</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -261,6 +264,10 @@ sorts. You can use it to store data as a request as it moves through the applica
 later.</p>
 <p><code class="docutils literal notranslate"><span class="pre">e</span></code> is an additional parameter not shown above which the framework can sometimes pass into main(), but
 that’s specific to exception handlers (<code class="docutils literal notranslate"><span class="pre">e</span></code> is the exception object).</p>
+<p>These are all of the parameters <em>the framework</em> will pass into your <code class="docutils literal notranslate"><span class="pre">main()</span></code> functions. But you can include
+arbitrary additional params using the app_map() function described <a class="reference internal" href="#quickstart">above</a>. That’s discussed
+more in the section <a class="reference internal" href="#the-extra-parameters-on-main">The extra parameters on main()</a>.</p>
+<p>But first let’s talk more about <code class="docutils literal notranslate"><span class="pre">e</span></code></p>
 </section>
 <section id="raising-abort-exceptions">
 <h3>Raising abort() exceptions<a class="headerlink" href="#raising-abort-exceptions" title="Link to this heading"></a></h3>
@@ -378,11 +385,142 @@ which contains a <code class="docutils literal notranslate"><span class="pre">.o
 </pre></div>
 </div>
 </section>
+<section id="the-extra-parameters-on-main">
+<h3>The extra parameters on main()<a class="headerlink" href="#the-extra-parameters-on-main" title="Link to this heading"></a></h3>
+<p>As discussed above, <code class="docutils literal notranslate"><span class="pre">main()</span></code> can receive the parameters <code class="docutils literal notranslate"><span class="pre">request</span></code>, <code class="docutils literal notranslate"><span class="pre">response</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, <code class="docutils literal notranslate"><span class="pre">abort</span></code>, <code class="docutils literal notranslate"><span class="pre">g</span></code>, and <code class="docutils literal notranslate"><span class="pre">e</span></code>
+from the framework, and can do so in no particular order.</p>
+<p>What make cylinder particularly powerful is the ability to also receive arbitrary parameters defined by the
+developer as well. These are specified in the <code class="docutils literal notranslate"><span class="pre">app_map()</span></code> response. In the example <a class="reference internal" href="#quickstart">above</a>
+<code class="docutils literal notranslate"><span class="pre">app_map()</span></code> returns <code class="docutils literal notranslate"><span class="pre">&quot;my_webapps&quot;,</span> <span class="pre">&quot;webapp1&quot;,</span> <span class="pre">{}</span></code> - the webroot folder, the webapp name, and an empty dict.</p>
+<p>That empty dict specifies extra parameters that <code class="docutils literal notranslate"><span class="pre">main()</span></code> can receive at any point in the web app. For
+example, above we’ve imported the <code class="docutils literal notranslate"><span class="pre">traceback</span></code> module and <code class="docutils literal notranslate"><span class="pre">json</span></code> module for use in some error handlers. If
+we’ve found ourselves importing a module often and we wanted to shorthand this, you could pull that module
+in as a parameter instead:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>  <span class="c1"># pip install cylinder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span> <span class="c1"># pip install waitress</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
+    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;json&#39;</span><span class="p">:</span> <span class="n">json</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now that <code class="docutils literal notranslate"><span class="pre">json</span></code> is defined in the parameter dict, any page in webapp1 can use it as a parameter to
+<code class="docutils literal notranslate"><span class="pre">main()</span></code>.</p>
+<p>Meaning instead of this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+        <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;hello world&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>You could do this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">json</span><span class="p">):</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+        <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;hello world&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>Similarly, if you would prefer to use the convention <code class="docutils literal notranslate"><span class="pre">main(request,</span> <span class="pre">response,</span> <span class="pre">logger)</span></code> instead of
+<code class="docutils literal notranslate"><span class="pre">main(request,</span> <span class="pre">response,</span> <span class="pre">log)</span></code> you could do something like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>  <span class="c1"># pip install cylinder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span> <span class="c1"># pip install waitress</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
+    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;logger&#39;</span><span class="p">:</span> <span class="n">log</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="html-templates-and-jinja2">
+<h3>HTML templates and jinja2<a class="headerlink" href="#html-templates-and-jinja2" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="#the-extra-parameters-on-main">The extra parameters on main()</a> allow for unlimited extensibility, and are
+the reason cylinder doesn’t ship with a template engine integrated: because implementing it yourself is
+very simple, here’s <code class="docutils literal notranslate"><span class="pre">cylinder_main.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>  <span class="c1"># pip install cylinder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span> <span class="c1"># pip install waitress</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jinja2</span> <span class="c1"># pip install Jinja2</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
+    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;render_template&#39;</span><span class="p">:</span> <span class="n">render_template</span><span class="p">}</span>
+
+<span class="n">jinja_env</span> <span class="o">=</span> <span class="n">jinja2</span><span class="o">.</span><span class="n">Environment</span><span class="p">(</span>
+    <span class="n">loader</span><span class="o">=</span><span class="n">jinja2</span><span class="o">.</span><span class="n">FileSystemLoader</span><span class="p">(</span><span class="s1">&#39;templates&#39;</span><span class="p">),</span>
+    <span class="n">auto_reload</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">autoescape</span><span class="o">=</span><span class="n">jinja2</span><span class="o">.</span><span class="n">select_autoescape</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">render_template</span><span class="p">(</span><span class="n">template_name</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">jinja_env</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="n">template_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>And just like that you have a <code class="docutils literal notranslate"><span class="pre">render_template</span></code> parameter on <code class="docutils literal notranslate"><span class="pre">main()</span></code> that behaves like
+<a class="reference external" href="https://flask.palletsprojects.com/en/stable/api/#flask.render_template">the one in Flask</a></p>
+<p>In the <strong>cylinder_main.py</strong> above, we specified the <code class="docutils literal notranslate"><span class="pre">templates</span></code> folder as the location of our template
+files, so here’s what that would look like in practice:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /templates
+        |-- hello.html
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+</pre></div>
+</div>
+<p>Here’s <code class="docutils literal notranslate"><span class="pre">webapp1.ex.get.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">render_template</span><span class="p">):</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">render_template</span><span class="p">(</span><span class="s2">&quot;hello.html&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Developer&quot;</span><span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;text/HTML; charset=utf-8&quot;</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>Here’s <code class="docutils literal notranslate"><span class="pre">hello.html</span></code>:</p>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;!doctype html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+        hello, {{name}}
+    <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>And now, as expected, visiting / of the site outputs “Hello, Developer”</p>
+</section>
+<section id="using-database-connections-and-orms-like-sqlalchemy">
+<h3>Using Database Connections and ORMs like SQLAlchemy<a class="headerlink" href="#using-database-connections-and-orms-like-sqlalchemy" title="Link to this heading"></a></h3>
+<p>Just as you can…</p>
+</section>
 </section>
 <section id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
 <p>Pull requests welcome. Please read
-<a class="reference internal" href="general/contributing/#contributing-to-plasma-cylinder"><span class="std std-ref">the contributing guide</span></a></p>
+<a class="reference internal" href="general/contributing.html#contributing-to-plasma-cylinder"><span class="std std-ref">the contributing guide</span></a></p>
 </section>
 </section>
 
@@ -390,8 +528,8 @@ which contains a <code class="docutils literal notranslate"><span class="pre">.o
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="contents/" class="btn btn-neutral float-left" title="Table Of Contents" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="general/contributing/" class="btn btn-neutral float-right" title="Contributing to Plasma Cylinder" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="contents.html" class="btn btn-neutral float-left" title="Table Of Contents" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="general/contributing.html" class="btn btn-neutral float-right" title="Contributing to Plasma Cylinder" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
