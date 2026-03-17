@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Plasma Cylinder" href="index.html" /> 
+    <link rel="next" title="Cylinder" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,7 +42,7 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="index.html">Plasma Cylinder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Cylinder</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">General</span></p>
 <ul>
@@ -80,21 +80,44 @@
 <h1>Table Of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="index.html">Plasma Cylinder</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="index.html#features">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Cylinder</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="index.html#philosophy">Philosophy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="index.html#quickstart">Quickstart</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="index.html#implementing-pages">Implementing “pages”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#implementing-pages">Implementing pages</a></li>
 <li class="toctree-l3"><a class="reference internal" href="index.html#http-method-routing">HTTP method routing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#the-request-and-response-objects">The request and response objects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#the-parameters-on-main">The parameters on main()</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#raising-abort-exceptions">Raising abort() exceptions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#exception-handlers">Exception Handlers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#handling-uncaught-exceptions">Handling Uncaught Exceptions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#the-extra-parameters-on-main">The extra parameters on main()</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#html-templates-and-jinja2">HTML templates and jinja2</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#using-database-connections-and-orms-like-sqlalchemy">Using Database Connections and ORMs like SQLAlchemy</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#how-requests-are-matched">How requests are matched</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#the-request-and-response-objects">The request and response objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#the-parameters-on-main">The parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#raising-abort-exceptions">Raising <code class="docutils literal notranslate"><span class="pre">abort()</span></code> exceptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#exception-handlers">Exception handlers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#handling-uncaught-exceptions">Handling uncaught exceptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#extra-parameters-on-main">Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="index.html#choosing-names-for-extra-parameters">Choosing names for extra parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#html-templates-and-jinja2">HTML templates and Jinja2</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#static-files">Static files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#why-there-are-no-index-files">Why there are no index files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#using-database-connections-and-orms-like-sqlalchemy">Using database connections and ORMs like SQLAlchemy</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#sessions">Sessions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#dynamic-paths-dynamic-route-handling">Dynamic paths / dynamic route handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#accessing-the-remaining-path">Accessing the remaining path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#hooks">Hooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#how-configuration-and-environments-are-handled">How configuration and environments are handled</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#abort-extra"><code class="docutils literal notranslate"><span class="pre">abort_extra</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#import-caching-and-reload-behavior">Import caching and reload behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#logging-configuration">Logging configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#request-id-header">request_id_header</a></li>
 <li class="toctree-l2"><a class="reference internal" href="index.html#contributing">Contributing</a></li>
 </ul>
 </li>
@@ -114,7 +137,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-right" title="Plasma Cylinder" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-right" title="Cylinder" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
