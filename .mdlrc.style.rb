@@ -25,7 +25,7 @@ rule "MD026", :punctuation => ".,;:!?" # Trailing punctuation in header
 rule "MD027" # Multiple spaces after blockquote symbol
 rule "MD028" # Blank line inside blockquote
 rule "MD029", :style => :ordered # Ordered list item prefix
-rule "MD030", :ul_single => 3, :ol_single => 3, :ul_multi => 3, :ol_multi => 3 # Spaces after list markers
+rule "MD030", :ul_single => 3, :ol_single => 2, :ul_multi => 3, :ol_multi => 2 # Spaces after list markers
 rule "MD031" # Fenced code blocks should be surrounded by blank lines
 rule "MD032" # Lists should be surrounded by blank lines
 rule "MD033" # Inline HTML
