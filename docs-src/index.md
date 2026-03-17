@@ -301,8 +301,8 @@ def main(request, response, log, abort, g):
 The built-in parameters are:
 
 -   `response` — the
-    [Werkzeug Response](https://werkzeug.palletsprojects.com/en/stable/wrappers/#werkzeug.wrappers.Response) object your
-    handler should modify and return
+    [Werkzeug Response](https://werkzeug.palletsprojects.com/en/stable/wrappers/#werkzeug.wrappers.Response)
+    object your handler should modify and return
 -   `request` — the
     [Werkzeug Request](https://werkzeug.palletsprojects.com/en/stable/wrappers/#werkzeug.wrappers.Request)
     object for the current request
