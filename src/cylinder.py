@@ -15,7 +15,7 @@ import werkzeug
 import werkzeug.local
 import werkzeug.test
 
-__version__ = "v0.1.3"
+__version__ = "v0.1.4"
 
 werkzeug_local = werkzeug.local.Local()
 global_proxy = werkzeug_local("global_proxy")
