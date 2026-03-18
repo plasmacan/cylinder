@@ -1415,6 +1415,82 @@ If the configured header is missing, Cylinder generates a request ID automatical
 The request ID is included in log records so that all log entries for a single request can be correlated
 easily.
 
+## Streaming
+
+### Streaming response bodies
+
+In some cases, you may want to send a response incrementally instead of building the entire response body
+in memory first. This is commonly used for long-running processes, server-sent data, or large outputs.
+
+Cylinder supports streaming by allowing you to assign an iterable (such as a generator) to
+`response.response`.
+
+When doing this, you should remove the `Content-Length` header, since the total size of the response is not
+known in advance.
+
+For example:
+
+```python
+import time
+
+def main(response, log):
+    del response.headers["Content-Length"]
+    response.response = fibonacci(log)
+    return response
+
+def fibonacci(log):
+    a, b = 0, 1
+    while True:
+        time.sleep(0.1)
+        log.info(f"yielding: {a}")
+        yield f"{a}\n"
+        a, b = b, a + b
+```
+
+In this example, the response is streamed to the client one line at a time as values are generated.
+
+Each value yielded by the generator becomes part of the response body. This allows the client to start
+receiving data immediately, rather than waiting for the entire response to be constructed.
+
+Streaming responses still pass through hooks in the normal way, but once iteration begins, the response
+body is sent progressively as data is yielded.
+
+### Streaming request bodies
+
+Just as responses can be streamed out, request bodies can also be consumed incrementally.
+
+This is useful for handling large uploads or processing data as it arrives, without loading the entire
+request body into memory.
+
+The underlying Werkzeug request exposes the incoming data as a file-like stream via `request.stream`.
+
+For example:
+
+```python
+def main(request, response, log):
+    total_bytes = 0
+
+    while True:
+        chunk = request.stream.read(4096)
+        if not chunk:
+            break
+
+        total_bytes += len(chunk)
+        log.info(f"received {len(chunk)} bytes")
+
+    response.data = f"received {total_bytes} bytes"
+    return response
+```
+
+In this example, the request body is read in chunks of 4096 bytes until the stream is exhausted.
+
+This allows your application to handle large payloads efficiently, process data incrementally, or forward
+data to another service without buffering the entire request.
+
+If you access higher-level helpers like `request.data`, `request.form`, or `request.get_json()`, Werkzeug
+will read and buffer the full request body for you. To keep streaming behavior, work directly with
+`request.stream`.
+
 ## Contributing
 
 Pull requests welcome. Please read

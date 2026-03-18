@@ -275,6 +275,10 @@ def test_minimum_site(minimum_site_client):
     assert response.status_code == 200
     assert b"hello world" in response.data
 
+def test_default_order(minimum_site_client):
+    response = minimum_site_client.get("/default")
+    assert b"default here." in response.data
+
 def test_minimum_site_exception(caplog):
     def app_map_func(request, g):
         return "test_sites", "minimum_site", {"init": inittest}
