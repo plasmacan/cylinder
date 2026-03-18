@@ -284,7 +284,7 @@ def get_processors(http_method):
         if (
             http_method == "GET"
             and os.path.isfile(direct_path)
-            and not str(direct_path).endswith(".py")
+            and not str(direct_path).endswith((".py", ".pyc"))
             and str(pathlib.Path(direct_path).resolve()) == str(direct_path)
         ):
             processor = DirectFileServe
