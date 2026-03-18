@@ -289,7 +289,7 @@ def get_processors(http_method):
         ):
             processor = DirectFileServe
         else:
-            processor = get_module(find_processor_path([f"ex.{lower_method}", "default"]))
+            processor = get_module(find_processor_path([f"ex.{lower_method}", "ex.default"]))
 
         late_hook = get_module(find_processor_path([f"lh.{lower_method}", "lh.default"]))
 
