@@ -81,6 +81,11 @@
 <li class="toctree-l2"><a class="reference internal" href="#import-caching-and-reload-behavior">Import caching and reload behavior</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logging-configuration">Logging configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#request-id-header">request_id_header</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#streaming">Streaming</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#streaming-response-bodies">Streaming response bodies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#streaming-request-bodies">Streaming request bodies</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
 </ul>
 </li>
@@ -1316,6 +1321,69 @@ example, Cloudflare commonly uses <code class="docutils literal notranslate"><sp
 <p>If the configured header is missing, Cylinder generates a request ID automatically.</p>
 <p>The request ID is included in log records so that all log entries for a single request can be correlated
 easily.</p>
+</section>
+<section id="streaming">
+<h2>Streaming<a class="headerlink" href="#streaming" title="Link to this heading"></a></h2>
+<section id="streaming-response-bodies">
+<h3>Streaming response bodies<a class="headerlink" href="#streaming-response-bodies" title="Link to this heading"></a></h3>
+<p>In some cases, you may want to send a response incrementally instead of building the entire response body
+in memory first. This is commonly used for long-running processes, server-sent data, or large outputs.</p>
+<p>Cylinder supports streaming by allowing you to assign an iterable (such as a generator) to
+<code class="docutils literal notranslate"><span class="pre">response.response</span></code>.</p>
+<p>When doing this, you should remove the <code class="docutils literal notranslate"><span class="pre">Content-Length</span></code> header, since the total size of the response is not
+known in advance.</p>
+<p>For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+    <span class="k">del</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Length&quot;</span><span class="p">]</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">fibonacci</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fibonacci</span><span class="p">(</span><span class="n">log</span><span class="p">):</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;yielding: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>In this example, the response is streamed to the client one line at a time as values are generated.</p>
+<p>Each value yielded by the generator becomes part of the response body. This allows the client to start
+receiving data immediately, rather than waiting for the entire response to be constructed.</p>
+<p>Streaming responses still pass through hooks in the normal way, but once iteration begins, the response
+body is sent progressively as data is yielded.</p>
+</section>
+<section id="streaming-request-bodies">
+<h3>Streaming request bodies<a class="headerlink" href="#streaming-request-bodies" title="Link to this heading"></a></h3>
+<p>Just as responses can be streamed out, request bodies can also be consumed incrementally.</p>
+<p>This is useful for handling large uploads or processing data as it arrives, without loading the entire
+request body into memory.</p>
+<p>The underlying Werkzeug request exposes the incoming data as a file-like stream via <code class="docutils literal notranslate"><span class="pre">request.stream</span></code>.</p>
+<p>For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+    <span class="n">total_bytes</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4096</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">total_bytes</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;received </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;received </span><span class="si">{</span><span class="n">total_bytes</span><span class="si">}</span><span class="s2"> bytes&quot;</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>In this example, the request body is read in chunks of 4096 bytes until the stream is exhausted.</p>
+<p>This allows your application to handle large payloads efficiently, process data incrementally, or forward
+data to another service without buffering the entire request.</p>
+<p>If you access higher-level helpers like <code class="docutils literal notranslate"><span class="pre">request.data</span></code>, <code class="docutils literal notranslate"><span class="pre">request.form</span></code>, or <code class="docutils literal notranslate"><span class="pre">request.get_json()</span></code>, Werkzeug
+will read and buffer the full request body for you. To keep streaming behavior, work directly with
+<code class="docutils literal notranslate"><span class="pre">request.stream</span></code>.</p>
+</section>
 </section>
 <section id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
