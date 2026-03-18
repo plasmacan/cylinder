@@ -9,3 +9,4 @@ cylinder.egg-info
 .venv/
 .vscode/
 .ruff_cache/
+/docs-preview

@@ -3,7 +3,7 @@ import subprocess
 
 
 def main():
-    shutil.rmtree("docs", ignore_errors=True)
+    shutil.rmtree("docs-preview", ignore_errors=True)
     proc = subprocess.run(
         [
             "sphinx-build",
@@ -13,7 +13,7 @@ def main():
             "-b",
             "html",
             "docs-src",
-            "docs",
+            "docs-preview",
         ]
     )
     return proc.returncode
