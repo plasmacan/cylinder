@@ -19,7 +19,7 @@ release = "0.1"
 # ones.
 extensions = ["sphinx.ext.autosectionlabel", "myst_parser"]
 autosectionlabel_prefix_document = True
-html_show_sourcelink = False
+html_show_sourcelink = True
 myst_heading_anchors = 7
 
 # Add any paths that contain templates here, relative to this directory.
