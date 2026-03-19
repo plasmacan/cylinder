@@ -54,6 +54,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#the-request-and-response-objects">The request and response objects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-parameters-on-main">The parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#raising-abort-exceptions">Raising <code class="docutils literal notranslate"><span class="pre">abort()</span></code> exceptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#abort-extra">abort_extra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#abort-redirects">abort() Redirects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exception-handlers">Exception handlers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#handling-uncaught-exceptions">Handling uncaught exceptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#extra-parameters-on-main">Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a><ul>
@@ -77,13 +79,16 @@
 <li class="toctree-l2"><a class="reference internal" href="#hooks">Hooks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-configuration-and-environments-are-handled">How configuration and environments are handled</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#abort-extra"><code class="docutils literal notranslate"><span class="pre">abort_extra</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#import-caching-and-reload-behavior">Import caching and reload behavior</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logging-configuration">Logging configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#request-id-header">request_id_header</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#streaming">Streaming</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#streaming-response-bodies">Streaming response bodies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#streaming-request-bodies">Streaming request bodies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#type-hints-and-editor-support">Type hints and editor support</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#typing-other-parameters">Typing other parameters</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
@@ -433,7 +438,66 @@ Something went wrong
 </div>
 <p>This is often good enough for simple HTML responses, but many applications need more control than that. For
 example, a JSON API usually should not return an HTML error page for a <code class="docutils literal notranslate"><span class="pre">400</span></code> response.</p>
-<p>That is where exception handler files come in.</p>
+<p>That is where <a class="reference internal" href="#exception-handlers">exception handler files</a> come in.</p>
+</section>
+<section id="abort-extra">
+<h3>abort_extra<a class="headerlink" href="#abort-extra" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">abort_extra</span></code> is an optional argument to <code class="docutils literal notranslate"><span class="pre">get_app()</span></code> that lets you register additional HTTP exception
+classes beyond the ones
+<a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/exceptions/#custom-errors">Werkzeug provides by default</a>.</p>
+<p>This extends both <code class="docutils literal notranslate"><span class="pre">abort()</span></code> and the corresponding error-handler file mechanism.</p>
+<p>For example, if you want to support <code class="docutils literal notranslate"><span class="pre">507</span> <span class="pre">Insufficient</span> <span class="pre">Storage</span></code>, you can define your own exception class and
+pass it in through <code class="docutils literal notranslate"><span class="pre">abort_extra</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">werkzeug</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">InsufficientStorage</span><span class="p">(</span><span class="n">werkzeug</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPException</span><span class="p">):</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="mi">507</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Insufficient Storage&quot;</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;The server has insufficient storage to complete the request&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span>
+        <span class="n">app_map</span><span class="p">,</span>
+        <span class="n">abort_extra</span><span class="o">=</span><span class="p">{</span><span class="mi">507</span><span class="p">:</span> <span class="n">InsufficientStorage</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Once that is configured, calling <code class="docutils literal notranslate"><span class="pre">abort(507)</span></code> anywhere in your handlers will raise that exception.</p>
+<p>If you do not provide a custom <code class="docutils literal notranslate"><span class="pre">507</span></code> error handler, the response will use your exception’s defined name,
+description, and status code.</p>
+<p>If you do provide a matching error handler file such as <code class="docutils literal notranslate"><span class="pre">webapp1.507.py</span></code>, Cylinder will route the request
+through that handler and let you customize the response just like any other HTTP error.</p>
+</section>
+<section id="abort-redirects">
+<h3>abort() Redirects<a class="headerlink" href="#abort-redirects" title="Link to this heading"></a></h3>
+<p>Cylinder also supports redirects through <code class="docutils literal notranslate"><span class="pre">abort()</span></code>.</p>
+<p>The built-in redirect codes are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">301</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">302</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">303</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">307</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">308</span></code></p></li>
+</ul>
+<p>The second argument to <code class="docutils literal notranslate"><span class="pre">abort()</span></code> is the redirect target, for example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">):</span>
+        <span class="n">abort</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span> <span class="s2">&quot;/login&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Redirects do not use <code class="docutils literal notranslate"><span class="pre">301.py</span></code>, <code class="docutils literal notranslate"><span class="pre">302.py</span></code>, and similar <a class="reference internal" href="#exception-handlers">exception handler files</a>.
+Cylinder handles the redirect automatically.</p>
+<p>Late hooks still run unless the redirect is raised from the late hook itself, so late hooks can still
+modify headers on redirect responses.</p>
 </section>
 <section id="exception-handlers">
 <h3>Exception handlers<a class="headerlink" href="#exception-handlers" title="Link to this heading"></a></h3>
@@ -1210,43 +1274,6 @@ same way:</p>
 <p>This makes it easy to test Cylinder apps using the same request/response patterns you would use in
 production.</p>
 </section>
-<section id="abort-extra">
-<h2><code class="docutils literal notranslate"><span class="pre">abort_extra</span></code><a class="headerlink" href="#abort-extra" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">abort_extra</span></code> is an optional argument to <code class="docutils literal notranslate"><span class="pre">get_app()</span></code> that lets you register additional HTTP exception
-classes beyond the ones
-<a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/exceptions/#custom-errors">Werkzeug provides by default</a>.</p>
-<p>This extends both <code class="docutils literal notranslate"><span class="pre">abort()</span></code> and the corresponding error-handler file mechanism.</p>
-<p>For example, if you want to support <code class="docutils literal notranslate"><span class="pre">507</span> <span class="pre">Insufficient</span> <span class="pre">Storage</span></code>, you can define your own exception class and
-pass it in through <code class="docutils literal notranslate"><span class="pre">abort_extra</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">werkzeug</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">InsufficientStorage</span><span class="p">(</span><span class="n">werkzeug</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPException</span><span class="p">):</span>
-    <span class="n">code</span> <span class="o">=</span> <span class="mi">507</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Insufficient Storage&quot;</span>
-    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;The server has insufficient storage to complete the request&quot;</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span>
-        <span class="n">app_map</span><span class="p">,</span>
-        <span class="n">abort_extra</span><span class="o">=</span><span class="p">{</span><span class="mi">507</span><span class="p">:</span> <span class="n">InsufficientStorage</span><span class="p">},</span>
-    <span class="p">)</span>
-    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{}</span>
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Once that is configured, calling <code class="docutils literal notranslate"><span class="pre">abort(507)</span></code> anywhere in your handlers will raise that exception.</p>
-<p>If you do not provide a custom <code class="docutils literal notranslate"><span class="pre">507</span></code> error handler, the response will use the exception’s default name,
-description, and status code.</p>
-<p>If you do provide a matching error handler file such as <code class="docutils literal notranslate"><span class="pre">webapp1.507.py</span></code>, Cylinder will route the request
-through that handler and let you customize the response just like any other HTTP error.</p>
-</section>
 <section id="import-caching-and-reload-behavior">
 <h2>Import caching and reload behavior<a class="headerlink" href="#import-caching-and-reload-behavior" title="Link to this heading"></a></h2>
 <p>Cylinder does not rely on a separate development reload mode for normal page changes.</p>
@@ -1383,6 +1410,64 @@ data to another service without buffering the entire request.</p>
 <p>If you access higher-level helpers like <code class="docutils literal notranslate"><span class="pre">request.data</span></code>, <code class="docutils literal notranslate"><span class="pre">request.form</span></code>, or <code class="docutils literal notranslate"><span class="pre">request.get_json()</span></code>, Werkzeug
 will read and buffer the full request body for you. To keep streaming behavior, work directly with
 <code class="docutils literal notranslate"><span class="pre">request.stream</span></code>.</p>
+</section>
+</section>
+<section id="type-hints-and-editor-support">
+<h2>Type hints and editor support<a class="headerlink" href="#type-hints-and-editor-support" title="Link to this heading"></a></h2>
+<p>Cylinder does not require type hints, but adding them can make development much easier. Most modern editors
+(such as VS Code or PyCharm) use type hints to provide:</p>
+<ul class="simple">
+<li><p>autocomplete suggestions</p></li>
+<li><p>inline documentation</p></li>
+<li><p>error highlighting</p></li>
+<li><p>better navigation</p></li>
+</ul>
+<p>For example, you can annotate <code class="docutils literal notranslate"><span class="pre">request</span></code> and <code class="docutils literal notranslate"><span class="pre">response</span></code> using Werkzeug’s types:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">):</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>This allows your editor to understand what <code class="docutils literal notranslate"><span class="pre">request</span></code> and <code class="docutils literal notranslate"><span class="pre">response</span></code> are, so attributes like <code class="docutils literal notranslate"><span class="pre">request.args</span></code>,
+<code class="docutils literal notranslate"><span class="pre">request.cookies</span></code>, or <code class="docutils literal notranslate"><span class="pre">response.headers</span></code> will autocomplete correctly.</p>
+<section id="typing-other-parameters">
+<h3>Typing other parameters<a class="headerlink" href="#typing-other-parameters" title="Link to this heading"></a></h3>
+<p>You can also add type hints for other built-in parameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
+    <span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span>
+    <span class="n">log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="n">g</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;path: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">g</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mi">123</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>For exception handlers, you can type the <code class="docutils literal notranslate"><span class="pre">e</span></code> parameter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTTPException</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="n">HTTPException</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>Or in the case of the 500 handler (see: <a class="reference internal" href="#handling-uncaught-exceptions">Handling uncaught exceptions</a>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InternalServerError</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="n">InternalServerError</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>Type hints are optional, but recommended. They do not change how Cylinder works, but they help your editor
+understand your code, which makes development faster and reduces mistakes.</p>
 </section>
 </section>
 <section id="contributing">

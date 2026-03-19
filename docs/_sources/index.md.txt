@@ -371,7 +371,76 @@ Something went wrong
 This is often good enough for simple HTML responses, but many applications need more control than that. For
 example, a JSON API usually should not return an HTML error page for a `400` response.
 
-That is where exception handler files come in.
+That is where [exception handler files](#exception-handlers) come in.
+
+### abort_extra
+
+`abort_extra` is an optional argument to `get_app()` that lets you register additional HTTP exception
+classes beyond the ones
+[Werkzeug provides by default](https://werkzeug.palletsprojects.com/en/stable/exceptions/#custom-errors).
+
+This extends both `abort()` and the corresponding error-handler file mechanism.
+
+For example, if you want to support `507 Insufficient Storage`, you can define your own exception class and
+pass it in through `abort_extra`:
+
+```python
+import cylinder
+import waitress
+import werkzeug
+
+class InsufficientStorage(werkzeug.exceptions.HTTPException):
+    code = 507
+    name = "Insufficient Storage"
+    description = "The server has insufficient storage to complete the request"
+
+def main():
+    app = cylinder.get_app(
+        app_map,
+        abort_extra={507: InsufficientStorage},
+    )
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1", {}
+
+if __name__ == "__main__":
+    main()
+```
+
+Once that is configured, calling `abort(507)` anywhere in your handlers will raise that exception.
+
+If you do not provide a custom `507` error handler, the response will use your exception’s defined name,
+description, and status code.
+
+If you do provide a matching error handler file such as `webapp1.507.py`, Cylinder will route the request
+through that handler and let you customize the response just like any other HTTP error.
+
+### abort() Redirects
+
+Cylinder also supports redirects through `abort()`.
+
+The built-in redirect codes are:
+
+-   `301`
+-   `302`
+-   `303`
+-   `307`
+-   `308`
+
+The second argument to `abort()` is the redirect target, for example:
+
+```python
+def main(request, abort):
+    if not request.cookies.get("session_id"):
+        abort(302, "/login")
+```
+
+Redirects do not use `301.py`, `302.py`, and similar [exception handler files](#exception-handlers).
+Cylinder handles the redirect automatically.
+
+Late hooks still run unless the redirect is raised from the late hook itself, so late hooks can still
+modify headers on redirect responses.
 
 ### Exception handlers
 
@@ -1282,49 +1351,6 @@ def test_cors_header(webapp1_client):
 This makes it easy to test Cylinder apps using the same request/response patterns you would use in
 production.
 
-## `abort_extra`
-
-`abort_extra` is an optional argument to `get_app()` that lets you register additional HTTP exception
-classes beyond the ones
-[Werkzeug provides by default](https://werkzeug.palletsprojects.com/en/stable/exceptions/#custom-errors).
-
-This extends both `abort()` and the corresponding error-handler file mechanism.
-
-For example, if you want to support `507 Insufficient Storage`, you can define your own exception class and
-pass it in through `abort_extra`:
-
-```python
-import cylinder
-import waitress
-import werkzeug
-
-class InsufficientStorage(werkzeug.exceptions.HTTPException):
-    code = 507
-    name = "Insufficient Storage"
-    description = "The server has insufficient storage to complete the request"
-
-def main():
-    app = cylinder.get_app(
-        app_map,
-        abort_extra={507: InsufficientStorage},
-    )
-    waitress.serve(app, host="127.0.0.1", port=80)
-
-def app_map(request):
-    return "my_webapps", "webapp1", {}
-
-if __name__ == "__main__":
-    main()
-```
-
-Once that is configured, calling `abort(507)` anywhere in your handlers will raise that exception.
-
-If you do not provide a custom `507` error handler, the response will use the exception’s default name,
-description, and status code.
-
-If you do provide a matching error handler file such as `webapp1.507.py`, Cylinder will route the request
-through that handler and let you customize the response just like any other HTTP error.
-
 ## Import caching and reload behavior
 
 Cylinder does not rely on a separate development reload mode for normal page changes.
@@ -1490,6 +1516,72 @@ data to another service without buffering the entire request.
 If you access higher-level helpers like `request.data`, `request.form`, or `request.get_json()`, Werkzeug
 will read and buffer the full request body for you. To keep streaming behavior, work directly with
 `request.stream`.
+
+## Type hints and editor support
+
+Cylinder does not require type hints, but adding them can make development much easier. Most modern editors
+(such as VS Code or PyCharm) use type hints to provide:
+
+-   autocomplete suggestions
+-   inline documentation
+-   error highlighting
+-   better navigation
+
+For example, you can annotate `request` and `response` using Werkzeug’s types:
+
+```python
+from werkzeug.wrappers import Request, Response
+
+def main(request: Request, response: Response):
+    response.data = request.path
+    return response
+```
+
+This allows your editor to understand what `request` and `response` are, so attributes like `request.args`,
+`request.cookies`, or `response.headers` will autocomplete correctly.
+
+### Typing other parameters
+
+You can also add type hints for other built-in parameters:
+
+```python
+from werkzeug.wrappers import Request, Response
+from types import SimpleNamespace
+import logging
+
+def main(
+    request: Request,
+    response: Response,
+    log: logging.Logger,
+    g: SimpleNamespace,
+):
+    log.info("path: %s", request.path)
+    g.value = 123
+    return response
+```
+
+For exception handlers, you can type the `e` parameter:
+
+```python
+from werkzeug.wrappers import Response
+from werkzeug.exceptions import HTTPException
+
+def main(response: Response, e: HTTPException):
+    return response
+```
+
+Or in the case of the 500 handler (see: [Handling uncaught exceptions](#handling-uncaught-exceptions)):
+
+```python
+from werkzeug.wrappers import Response
+from werkzeug.exceptions import InternalServerError
+
+def main(response: Response, e: InternalServerError):
+    return response
+```
+
+Type hints are optional, but recommended. They do not change how Cylinder works, but they help your editor
+understand your code, which makes development faster and reduces mistakes.
 
 ## Contributing
 
