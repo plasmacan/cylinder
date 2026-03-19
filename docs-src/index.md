@@ -1583,7 +1583,82 @@ def main(response: Response, e: InternalServerError):
 Type hints are optional, but recommended. They do not change how Cylinder works, but they help your editor
 understand your code, which makes development faster and reduces mistakes.
 
-## Contributing
+## Safeguards
 
-Pull requests welcome. Please read
-[the contributing guide](./general/contributing.md#contributing-to-plasma-cylinder)
+Cylinder includes a few small safeguards to make request handling more predictable.
+
+### Shallow requests in `app_map()` and early hooks
+
+During `app_map()` and early hooks, Cylinder uses the Werkzeug request object in
+[shallow](https://werkzeug.palletsprojects.com/en/stable/wrappers/#werkzeug.wrappers.Request.shallow) mode.
+
+In practice, that means code in those stages cannot read the request body through APIs such as:
+
+-   `request.data`
+-   `request.form`
+-   `request.get_json()`
+-   `request.stream.read(...)`
+
+This helps prevent a common class of bugs where shared routing or hook code consumes the request body
+before the main page handler gets a chance to use it.
+
+For example, this is a bad fit for an early hook:
+
+```python
+def main(request, response):
+    payload = request.get_json()
+    return response
+```
+
+If you need to inspect the request body, do that in the page handler instead.
+
+Access to metadata such as headers, cookies, query parameters, method, host, and path is still fine in
+`app_map()` and early hooks.
+
+### Handlers must return the same response object
+
+Cylinder creates one `response` object for the request and passes that same object through hooks, page
+handlers, and exception handlers.
+
+Your code must modify that object and return it. It should not create and return a different response
+object.
+
+For example, this is correct:
+
+```python
+def main(response):
+    response.data = "Hello World!"
+    return response
+```
+
+This is not:
+
+```python
+from werkzeug.wrappers import Response
+
+def main(response):
+    return Response("Hello World!")
+```
+
+If a handler returns a different response object, Cylinder raises:
+
+```text
+ValueError: must return the same response passed in
+```
+
+This rule keeps control flow simpler and makes it easier for hooks and handlers to cooperate on the same
+response.
+
+### Why these rules exist
+
+Both protections are there to reduce surprising behavior:
+
+-   shallow requests help prevent request-body consumption in shared pre-processing code
+-   the response identity check helps prevent handlers from silently bypassing earlier changes to the
+    response object
+
+The general pattern in Cylinder is:
+
+-   inspect request metadata in `app_map()` and early hooks
+-   read the request body in the page handler
+-   modify the provided `response` object and return that same object
