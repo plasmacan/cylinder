@@ -91,6 +91,7 @@ jobs:
         run: |
           rm -rf docs
           sphinx-build -W --keep-going -a -b dirhtml docs-src docs
+          cp docs-src/googledaf46947726ed284.html docs
           touch docs/.nojekyll
 
       - name: pre-commit final cleanup
