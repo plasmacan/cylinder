@@ -5,7 +5,7 @@ import time
 
 from src import cylinder
 from test_sites import init as inittest
-
+from types import SimpleNamespace
 
 def test_root_tripple(foo_site_client):
     # run twice so that the init_modules cache is non-empty at least once
@@ -96,7 +96,7 @@ def test_req_id(caplog):
     def app_map_func(request, g):
         return "test_sites", "foo_site", {"init": inittest}
 
-    foo_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler)
+    foo_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler, request_id_header='X-Request-ID')
     foo_site_client = foo_site_app.test_client()
     response = foo_site_client.get("/", headers={"X-Request-ID": "custom_req"})
     assert foo_site_app.global_proxy.request_id == "custom_req"
@@ -307,6 +307,18 @@ def test_minimum_site_exception_in_exception_handler(caplog):
     assert 'division by zero' in caplog.text
 
 
+def test_minimum_site_logging(caplog):
+    def app_map_func(request, g):
+        return "test_sites", "minimum_site"
+
+    minimum_site_app = cylinder.get_app(app_map_func, log_handler=caplog.handler)
+    minimum_site_app.wait_for_logs = True
+    minimum_site_client = minimum_site_app.test_client()
+    response = minimum_site_client.get("/")
+
+    assert 'it worked!' in caplog.text
+
+
 def test_no_hook_fail_site(no_hook_fail_site_client):
     response = no_hook_fail_site_client.get("/")
     assert response.status_code == 500
@@ -316,7 +328,7 @@ def test_no_hook_fail_site(no_hook_fail_site_client):
 def test_request_wait(capsys):
 
     def app_map_func(request, g):
-        return "test_sites", "minimum_site", {}
+        return "test_sites", "minimum_site"
 
     minimum_site_app = cylinder.get_app(app_map_func, logging.DEBUG)
 
@@ -340,7 +352,7 @@ def test_request_wait(capsys):
 def test_request_nowait(capsys):
 
     def app_map_func(request, g):
-        return "test_sites", "minimum_site", {}
+        return "test_sites", "minimum_site"
 
     minimum_site_app = cylinder.get_app(app_map_func, logging.DEBUG)
 
@@ -363,7 +375,7 @@ def test_request_nowait(capsys):
 
 def test_invalid_app_map(capsys):
     try:
-        tiny_queue_app = cylinder.get_app("app_map", logging.DEBUG, log_queue_length=1)
+        tiny_queue_app = cylinder.get_app("app_map", logging.DEBUG)
         assert False, "there should be a ValueError exception"
     except ValueError as e:
         assert "app_map must be a function" in str(e)
@@ -372,9 +384,11 @@ def test_invalid_app_map(capsys):
 def test_logger_full(capsys):
 
     def app_map_func(request, g):
-        return "test_sites", "minimum_site", {}
+        return "test_sites", "minimum_site"
 
-    tiny_queue_app = cylinder.get_app(app_map_func, logging.DEBUG, log_queue_length=1)
+    cylinder.log_queue_length = 1
+
+    tiny_queue_app = cylinder.get_app(app_map_func, logging.DEBUG)
 
     # the buffer only holds 1, this test fills is up
     log = tiny_queue_app.logger
@@ -386,10 +400,12 @@ def test_logger_full(capsys):
         time.sleep(0.01)
 
     captured = capsys.readouterr()
-    assert (
-        len(captured.err.splitlines()) < 10
-    )  # lines had to be dropped if buffer was full
+
+    # lines had to be dropped if buffer was full
+    assert len(captured.err.splitlines()) < 10
     assert len(captured.err.splitlines()) > 0
+
+    cylinder.log_queue_length = 1000
 
 
 def test_faulty_late_hook(caplog):
@@ -430,7 +446,7 @@ def test_late_redirect_no_late_hook(no_hook_fail_site_client):
 def test_late_abort():
 
     def app_map_func(request, g):
-        return "test_sites", "foo_site", {"init": inittest}
+        return "test_sites", "foo_site", {"init": inittest, "g": SimpleNamespace()}
 
     foo_site_app = cylinder.get_app(app_map_func)
     foo_site_client = foo_site_app.test_client()
@@ -438,8 +454,10 @@ def test_late_abort():
     response = foo_site_client.get("/late_abort")
     foo_site_app.log_queue.join()
 
+    print(foo_site_app.global_proxy.param_dict)
+
     assert response.status_code == 401
     assert b"not today" in response.data
-    assert foo_site_app.global_proxy.g.late_hook_run_count == 1, (
+    assert foo_site_app.global_proxy.param_dict['g'].late_hook_run_count == 1, (
         "late hook should only run once"
     )

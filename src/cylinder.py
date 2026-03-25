@@ -1,3 +1,29 @@
+"""
+Cylinder is a small, opinionated WSGI web framework built on top of werkzeug.
+
+It is designed for developers who want web applications to stay simple,
+readable, and predictable. By keeping routing visible in the filesystem and avoiding unnecessary
+abstractions, Cylinder makes applications easier to reason about and easier to troubleshoot.
+
+Key features include:
+
+- File-based routing that reflects the URL structure on disk
+- Minimal configuration and explicit application wiring
+- Support for hooks, custom error handlers, and method-based routing via filenames
+
+Cylinder aims to provide just enough structure to guide development without
+hiding how the application works.
+
+# Changes in 0.2:
+# removed g
+# allow no pram dict return
+# pass none into functions
+# disabled X-Request-ID
+# log renamed to "logger"
+# log_queue_length is now module-level
+
+"""
+
 import importlib.util
 import logging
 import logging.handlers
@@ -10,13 +36,22 @@ import time
 from datetime import datetime
 from types import SimpleNamespace
 import traceback
+from collections import deque
 
 import werkzeug
 import werkzeug.local
 import werkzeug.test
 
+__author__ = "Chris Wheeler, Nick Gray"
+__copyright__ = "Copyright 2026, The Plasma Foundation Inc."
+__credits__ = ["Chris Wheeler", "Nick Gray"]
+__license__ = "Apache-2.0"
 __version__ = "v0.1.4"
+__email__ = "Chris Wheeler <grintor@gmail.com>"
+__status__ = "Production"
 
+
+log_queue_length = 1000
 werkzeug_local = werkzeug.local.Local()
 global_proxy = werkzeug_local("global_proxy")
 
@@ -31,8 +66,7 @@ def get_app(
     app_map,
     log_level=logging.DEBUG,
     log_handler=None,
-    request_id_header="X-Request-ID",
-    log_queue_length=1000,
+    request_id_header=None,
     abort_extra=None,
 ):
     if not callable(app_map):
@@ -43,14 +77,12 @@ def get_app(
 
     logger, log_queue, log_listener = configure_logging(
         log_level=log_level,
-        log_queue_length=log_queue_length,
         log_handler=log_handler,
     )
 
     def app(environ, start_response):
         request = werkzeug.wrappers.Request(environ, shallow=True)
         werkzeug_local.global_proxy = SimpleNamespace()
-        global_proxy.g = SimpleNamespace()
 
         app.abort = werkzeug.exceptions.Aborter(
             extra={
@@ -65,27 +97,28 @@ def get_app(
 
         global_proxy.param_dict = {
             "request": request,
-            "g": global_proxy.g,
             "abort": app.abort,
-            "log": logger,
+            "logger": logger,
         }
 
         response = werkzeug.wrappers.Response()
 
-        site_dir, site_name, appended_args = run_func_with_dict(
-            {"response": response} | global_proxy.param_dict, app_map
-        )
+        app_map_response = run_func_with_dict({"response": response} | global_proxy.param_dict, app_map)
+
+        site_dir, site_name, appended_args = (*app_map_response, None)[:3]
+
+        global_proxy.param_dict.update(appended_args or {})
 
         site_path = pathlib.Path.cwd() / site_dir
         site_root = site_path / site_name
         global_proxy.search_paths = get_search_paths(site_root, request.path)
 
         global_proxy.site_path = site_path
-        request.start_time = time.time()
+        global_proxy.start_time = time.time()
 
         global_proxy.request_id = (
             request.headers.get(request_id_header)
-            or f"req_{format(int(request.start_time * 1000000), 'X')[::-1]}"
+            or f"req_{format(int(global_proxy.start_time * 1000000), 'X')[::-1]}"
         )
 
         logger.debug(
@@ -108,11 +141,12 @@ def get_app(
             for module in global_proxy.module_chain:
                 shallow_request = module is early_hook
                 response = process_module(
-                    module, response, global_proxy.param_dict | appended_args, logger, shallow_request
+                    module, response, global_proxy.param_dict, logger, shallow_request
                 )
             return response(environ, start_response)
 
-        except RedirectCustomClass as e:
+        except HTTPRedirect as e:
+            global_proxy.param_dict.update({"e": e})
             logger.debug("abort redirect %s raised.", e.code)
             response = werkzeug.wrappers.Response("", e.code, {"Location": e.description})
 
@@ -123,10 +157,9 @@ def get_app(
                 response = process_module(
                     late_hook,
                     response,
-                    global_proxy.param_dict | appended_args | {"e": e},
+                    global_proxy.param_dict,
                     logger,
                 )
-                response(environ, start_response)
 
             return response(environ, start_response)
 
@@ -134,6 +167,7 @@ def get_app(
             werkzeug.exceptions.HTTPException,
             werkzeug.exceptions.InternalServerError,
         ) as ex:
+            global_proxy.param_dict.update({"e": ex})
             response = ex.get_response()
             ex_code = response.status_code
             logger.debug("abort code %s raised.", ex_code)
@@ -144,21 +178,22 @@ def get_app(
                     logger.error("".join(traceback.format_exception(ex)))
             else:
                 try:
-                    # an exception in the exception handler becomes a 500 error
                     response = process_module(
                         custom_handler,
                         response,
-                        global_proxy.param_dict | appended_args | {"e": ex},
+                        global_proxy.param_dict,
                         logger,
                     )
                 except werkzeug.exceptions.InternalServerError as e:
+                    # an exception in the exception handler becomes a 500 error
+                    global_proxy.param_dict.update({"e": e})
                     custom_handler = get_http_error_handler(500)
                     if not custom_handler:
                         logger.error("".join(traceback.format_exception(e)))
                     response = process_module(
                         custom_handler,
                         e.get_response(),
-                        global_proxy.param_dict | appended_args | {"e": e},
+                        global_proxy.param_dict,
                         logger,
                     )
 
@@ -169,7 +204,7 @@ def get_app(
                 response = process_module(
                     late_hook,
                     response,
-                    global_proxy.param_dict | appended_args | {"e": ex},
+                    global_proxy.param_dict,
                     logger,
                 )
 
@@ -183,7 +218,7 @@ def get_app(
                 request.url,
                 request.environ.get("SERVER_PROTOCOL", ""),
                 response.status,
-                round((time.time() - request.start_time) * 1000),
+                round((time.time() - global_proxy.start_time) * 1000),
             )
 
             if app.wait_for_logs:
@@ -194,7 +229,6 @@ def get_app(
 
     app.logger = logger
     app.log_queue = log_queue
-    app.log_listener = log_listener
     app.wait_for_logs = False
     app.test_client = test_client
     app.global_proxy = global_proxy
@@ -204,7 +238,7 @@ def get_app(
     return app
 
 
-def configure_logging(log_level, log_queue_length, log_handler):
+def configure_logging(log_level, log_handler):
     log_queue = getattr(configure_logging, "log_queue", None)
     log_listener = getattr(configure_logging, "log_listener", None)
 
@@ -230,7 +264,7 @@ def configure_logging(log_level, log_queue_length, log_handler):
 
 
 def process_module(module, response, params, logger, shallow_request=False):
-    params = params | {"response": response}
+    params.update({"response": response})
     if not module:
         return response
     request = params["request"]
@@ -280,7 +314,7 @@ def get_processors(http_method):
 
         early_hook = get_module(find_processor_path([f"eh.{lower_method}", "eh.default"]))
 
-        direct_path = global_proxy.search_paths[-1]
+        direct_path = global_proxy.search_paths[0]
         if (
             http_method == "GET"
             and os.path.isfile(direct_path)
@@ -300,7 +334,7 @@ def get_processors(http_method):
 
 
 def find_processor_path(suffix_list):
-    for path in reversed(global_proxy.search_paths):
+    for path in global_proxy.search_paths:
         for suffix in suffix_list:
             potential_file = f"{path}.{suffix}.py"
             # pathlib .resolve() is here to handle the case-insensitivity of windows. Enforces case to match
@@ -313,11 +347,13 @@ def find_processor_path(suffix_list):
 
 
 def get_search_paths(site_path, url_path_str):
+    url_path_str = url_path_str.replace("\\", "/")  # path traversal protection
     part_list = url_path_str.strip("/").split("/")
-    results = [site_path]
+    results = deque()
+    results.append(site_path)
     for part in part_list:
         if part and part != "..":  # path traversal protection
-            results.append(results[-1] / part)
+            results.insert(0, results[0] / part)
     return results
 
 
@@ -327,14 +363,14 @@ def run_func_with_dict(input_dict, func):
     params = var_names[:arg_count]
     input_list = []
     for param in params:
-        input_list.append(input_dict[param])
+        input_list.append(input_dict.get(param, None))
     return func(*input_list)
 
 
 class DirectFileServe:
     @staticmethod
     def main(response):
-        direct_path = global_proxy.search_paths[-1]
+        direct_path = global_proxy.search_paths[0]
         mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
 
         if content_encoding:
@@ -348,9 +384,8 @@ class DirectFileServe:
 
 
 class CustomQueueHandler(logging.handlers.QueueHandler):
-    """Extend QueueHandler to attach Flask request context to record since
-    request context won't be available inside listener thread.
-    """
+    # Extend QueueHandler to attach request context to record since
+    # request context won't be available inside listener thread.
 
     def prepare(self, record):
         try:
@@ -373,39 +408,29 @@ class EvictQueue(queue.Queue):
                 return
             except queue.Full:
                 _ = self.get_nowait()
-                # we removed an item that will never be processed, so mark it "done"
                 self.task_done()
 
 
-class RedirectCustomClass(werkzeug.exceptions.HTTPException):
-    description = "/"  # set description to redirect URL
+class HTTPRedirect(werkzeug.exceptions.HTTPException):
+    description = "/"  # set description to redirect URL destination
+    name = "HTTPRedirect"
 
 
-class RedirectMovedPermanently(RedirectCustomClass):
-    # Permanent, POST MAY become GET
+class RedirectMovedPermanently(HTTPRedirect):
     code = 301
-    name = "Moved Permanently"
 
 
-class RedirectFound(RedirectCustomClass):
-    # Temporary, POST MAY become GET
+class RedirectFound(HTTPRedirect):
     code = 302
-    name = "Found"
 
 
-class RedirectSeeOther(RedirectCustomClass):
-    # Temporary, POST WILL become GET
+class RedirectSeeOther(HTTPRedirect):
     code = 303
-    name = "See Other"
 
 
-class RedirectTemporaryRedirect(RedirectCustomClass):
-    # Temporary, POST WILL NOT become GET
+class RedirectTemporaryRedirect(HTTPRedirect):
     code = 307
-    name = "Temporary Redirect"
 
 
-class RedirectPermanentRedirect(RedirectCustomClass):
-    # Permanent, POST WILL NOT become GET
+class RedirectPermanentRedirect(HTTPRedirect):
     code = 308
-    name = "Permanent Redirect"

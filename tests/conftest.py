@@ -5,6 +5,7 @@ import pytest
 
 from src import cylinder
 from test_sites import init as inittest
+from types import SimpleNamespace
 
 jinja_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader("test_sites/templates"),
@@ -21,10 +22,11 @@ def render_template(template_name, **context):
 @pytest.fixture()
 def foo_site_app():
     def app_map_func(request):
+
         return (
             "test_sites",
             "foo_site",
-            {"init": inittest, "render_template": render_template},
+            {"init": inittest, "render_template": render_template, 'g': SimpleNamespace()},
         )
 
     app = cylinder.get_app(app_map_func, logging.DEBUG)
@@ -56,7 +58,7 @@ def foo_site_client(foo_site_app):
 
 
 @pytest.fixture()
-def minimum_site_client():
+def minimum_site_client(caplog):
 
     def app_map_func(request, g):
         return (
@@ -66,7 +68,6 @@ def minimum_site_client():
         )
 
     minimum_site_app = cylinder.get_app(app_map_func, logging.DEBUG)
-    minimum_site_app.wait_for_logs = True
 
     return minimum_site_app.test_client()
 
