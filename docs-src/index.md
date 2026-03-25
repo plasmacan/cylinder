@@ -2,7 +2,8 @@
 
 Cylinder is a small, opinionated WSGI web framework built on
 [Werkzeug](https://werkzeug.palletsprojects.com/en/2.1.x/serving/). It is designed for developers who want
-web applications to stay simple, readable, and predictable.
+web applications to stay simple, readable, and predictable. The framework is implemented as a single file
+with [less than 400 lines of code](https://github.com/plasmacan/cylinder/blob/main/src/cylinder.py)
 
 Instead of layering on a large stack of framework abstractions, Cylinder builds on Werkzeug’s proven HTTP
 and WSGI foundations and adds structure through file-based routing. It aims to sit between the two common
@@ -99,6 +100,8 @@ Start the app by running `cylinder_main.py`, then visit `http://127.0.0.1`. You 
 Hello World!
 ```
 
+## Routing basics
+
 ### Implementing pages
 
 In the example above, `webapp1.ex.get.py` handles `GET /`, but because it sits at the root of the webapp it
@@ -132,6 +135,50 @@ Now a request to `http://127.0.0.1/foo/bar` will return:
 ```text
 Hello Bar!
 ```
+
+### Why there are no index files
+
+Many web frameworks and file-based routers revolve around names like `index.html`, `index.php`, or
+`page.tsx`.
+
+Cylinder intentionally does not.
+
+One reason is readability. In larger projects, repeated index-style filenames tend to create “index soup”:
+you open several tabs in your editor and they all have the same name, even though they represent completely
+different routes.
+
+Cylinder avoids that by naming each handler after the final path segment it handles. That keeps route
+structure visible in the filesystem while also making files easier to recognize in an editor.
+
+For example, if you are working on `/api/v2/reports/company/payments`, the relevant handlers might look
+like this:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- /webapp1
+            |-- /API
+                |-- /v2
+                    |-- reports.ex.get.py
+                    |-- /reports
+                        |-- company.ex.get.py
+                        |-- /company
+                            |-- payments.ex.get.py
+```
+
+In this example, only `GET` handlers are shown. If you also wanted to support
+`PUT /api/v2/reports/company/payments`, you could add `payments.ex.put.py` in the same directory, or use
+`payments.ex.default.py` if you want one file to handle multiple methods.
+
+The important thing to notice is that there is no `index.ex.get.py`, because there does not need to be.
+
+In Cylinder, a route segment can correspond to both a directory and a file. So even though
+`/reports/company` corresponds to a `company` directory inside `/reports`, it can also be handled by
+`company.ex.get.py` in that same location.
+
+This keeps filenames meaningful without giving up nested route structure.
 
 ### HTTP method routing
 
@@ -168,7 +215,7 @@ For example:
 Meanwhile, `webapp1.ex.get.py` continues to handle `GET` requests everywhere else that does not have a more
 specific match.
 
-To behave like a typical web app, and return 404 responses for any unimplemented pages, you could edit
+To behave like a typical web app and return 404 responses for any unimplemented pages, you could edit
 `webapp1.ex.get.py` like so:
 
 ```python
@@ -178,10 +225,9 @@ def main(request, response, abort):
     return response
 ```
 
-More details about the abort() function are documented in the
-[Raising abort() exceptions](#raising-abort-exceptions) section below.
+More details about the abort() function are documented in the [abort()](#abort) section below.
 
-## How requests are matched
+### How requests are matched
 
 When a request comes in, Cylinder chooses the most specific match available on disk.
 
@@ -245,6 +291,146 @@ If there were no `bar.400.py`, then `webapp1.400.py` would handle that error ins
 The main idea is simple: Cylinder prefers the most specific file available for the request, and then
 applies hooks and error handlers around that choice.
 
+### Static files
+
+Cylinder can also serve static files directly from the filesystem.
+
+For example:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- webapp1.500.py
+        |-- /webapp1
+            |-- example1.json
+            |-- foo.400.py
+            |-- /foo
+                |-- example2.css
+```
+
+In this layout:
+
+-   a request to `/example1.json` returns the contents of `example1.json`
+-   a request to `/foo/example2.css` returns the contents of `example2.css`
+
+Cylinder sets the `Content-Type` header based on the file extension using Python’s standard library
+[`mimetypes`](https://docs.python.org/3/library/mimetypes.html). In the example above, the responses would
+use `application/json` and `text/css` respectively.
+
+Static files are served only when the URL path matches the file path exactly. Python source files are never
+served.
+
+Static file responses still pass through the normal hook system, so early hooks and late hooks can inspect
+or modify the response just as they can for page handlers.
+
+### Dynamic paths / dynamic route handling
+
+Not every URL has a simple 1:1 relationship with the filesystem.
+
+For example, in a REST API you might expect:
+
+-   `POST /API/v1/users` to create a user and return an ID
+-   `GET /API/v1/users/<id>` to return a specific user
+-   `GET /API/v1/users?lname=Smith` to search for users by last name
+-   `PUT /API/v1/users/<id>` to update a specific user
+-   `DELETE /API/v1/users/<id>` to delete a specific user
+
+Cylinder does not use named dynamic route declarations. Instead, it matches each request to the most
+specific handler on disk, and any remaining path information stays available on the request object for your
+application code to interpret.
+
+A layout for the example above might look like this:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- /webapp1
+            |-- /API
+                |-- v1.ex.default.py
+                |-- /v1
+                    |-- users.ex.post.py
+                    |-- users.ex.get.py
+                    |-- users.ex.put.py
+                    |-- users.ex.delete.py
+```
+
+In this layout:
+
+-   `POST /API/v1/users` is handled by `users.ex.post.py`
+-   `GET /API/v1/users` is handled by `users.ex.get.py`
+-   `PUT /API/v1/users/<id>` is handled by `users.ex.put.py`
+-   `DELETE /API/v1/users/<id>` is handled by `users.ex.delete.py`
+
+The important point is that Cylinder routes the request to the most specific matching handler file. It does
+not matter that `/users/<id>` contains dynamic path data after `/users`; that remaining path can be
+interpreted by your handler code using the request object.
+
+For example, a `HEAD` request to `/API/v1/users` would be handled by `v1.ex.default.py`, because there is
+no more specific `HEAD` handler for that route. A `GET` request to `/API/v1/users` would still be handled
+by `users.ex.get.py`.
+
+#### Accessing the remaining path
+
+Cylinder does not parse dynamic path segments into named route parameters for you.
+
+Instead, your handler receives the normal Werkzeug `request` object, and you can inspect the request path
+directly and interpret any remaining segments however your application needs.
+
+For example, with this layout:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- /webapp1
+            |-- /API
+                |-- /v1
+                    |-- users.ex.get.py
+```
+
+a `GET` request to `/API/v1/users` and a request to `/API/v1/users/123` would both be handled by
+`users.ex.get.py`.
+
+Inside that handler, you can examine `request.path` and parse the remainder yourself:
+
+```python
+def main(request, response):
+    path = request.path.rstrip("/")
+    parts = path.split("/")
+
+    if len(parts) == 4:
+        # /API/v1/users
+        response.data = "list users"
+    elif len(parts) == 5:
+        # /API/v1/users/123
+        user_id = parts[4]
+        response.data = f"get user {user_id}"
+    else:
+        response.status_code = 404
+        response.data = "not found"
+
+    return response
+```
+
+Query string parameters continue to work normally through Werkzeug as well:
+
+```python
+def main(request, response):
+    last_name = request.args.get("lname")
+    response.data = f"searching for lname={last_name}"
+    return response
+```
+
+The important point is that Cylinder handles selecting the correct file, while your application code
+remains responsible for interpreting any dynamic data that comes after that match.
+
+## Request lifecycle
+
 ### The request and response objects
 
 Each page module implements a `main()` function. The most important object passed into that function is
@@ -290,7 +476,7 @@ Hello Mozilla/5.0 (...)
 The order of the parameters does not matter. For example, `main(response, request)` works the same way as
 `main(request, response)`.
 
-### The parameters on `main()`
+### Handler Parameters
 
 Each page file is a normal Python module, and each handler is a normal Python function named `main()`. You
 can define other helper functions of course, as with any Python module.
@@ -334,10 +520,79 @@ def app_map(request, response, logger, abort):
 ```
 
 You can also define your own extra parameters in `app_map()`,
-[which are covered later](#extra-parameters-on-main). Before that, it helps to understand how `abort()` and
+[as covered later](#extra-parameters-on-main). Before that, it helps to understand how `abort()` and
 exception handlers work.
 
-### Raising `abort()` exceptions
+### Hooks
+
+Cylinder supports two kinds of hooks:
+
+-   `early hooks`, which run before the main page handler
+-   `late hooks`, which run after the main page handler
+
+Hooks are defined the same way as page handlers: by placing files in the filesystem with special
+extensions.
+
+For example:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- /webapp1
+            |-- /API
+                |-- v2.lh.get.py
+                |-- /v2
+                    |-- reports.eh.get.py
+                    |-- reports.ex.get.py
+                    |-- /reports
+                        |-- company.ex.get.py
+                        |-- /company
+                            |-- payments.ex.get.py
+                    |-- users.ex.get.py
+```
+
+In this layout:
+
+-   `v2.lh.get.py` is a late hook for requests under `/API/v2/*`
+-   `reports.eh.get.py` is an early hook for requests under `/API/v2/reports/*`
+
+So a `GET` request to `/API/v2/reports/company/*` would flow like this after `app_map()`:
+
+1.  `main()` in `reports.eh.get.py`
+2.  `main()` in `company.ex.get.py`
+3.  `main()` in `v2.lh.get.py`
+
+A `GET` request to `/API/v2/users` would flow like this instead:
+
+1.  `main()` in `users.ex.get.py`
+2.  `main()` in `v2.lh.get.py`
+
+Hooks use the same `main()` function pattern as normal page handlers, and they can receive the same
+parameters.
+
+Their main purpose is to avoid repetition by letting shared logic run across a directory subtree. Common
+examples include authentication checks, loading shared request data, setting default headers, or enforcing
+response policies.
+
+Early hooks are a good place to set defaults before the page handler runs. Late hooks are a good place to
+enforce final response behavior, because they run after the page handler and get the last word.
+
+For example, if `v2.lh.get.py` contains:
+
+```python
+def main(response):
+    response.headers["Content-Security-Policy"] = "default-src 'self';"
+    return response
+```
+
+then a different `Content-Security-Policy` set earlier in `company.ex.get.py` would be overwritten by the
+late hook.
+
+## Error handling
+
+### abort()
 
 The
 [`abort()` function in Werkzeug](https://werkzeug.palletsprojects.com/en/stable/exceptions/#simple-aborting)
@@ -380,69 +635,6 @@ This is often good enough for simple HTML responses, but many applications need 
 example, a JSON API usually should not return an HTML error page for a `400` response.
 
 That is where [exception handler files](#exception-handlers) come in.
-
-### abort_extra
-
-`abort_extra` is an optional argument to `get_app()` that lets you register additional HTTP exception
-classes beyond the ones
-[Werkzeug provides by default](https://werkzeug.palletsprojects.com/en/stable/exceptions/#custom-errors).
-
-This extends both `abort()` and the corresponding error-handler file mechanism.
-
-For example, if you want to support `507 Insufficient Storage`, you can define your own exception class and
-pass it in through `abort_extra`:
-
-```python
-import cylinder
-import waitress
-import werkzeug
-
-class InsufficientStorage(werkzeug.exceptions.HTTPException):
-    code = 507
-    name = "Insufficient Storage"
-    description = "The server has insufficient storage to complete the request"
-
-def main():
-    app = cylinder.get_app(
-        app_map,
-        abort_extra={507: InsufficientStorage},
-    )
-    waitress.serve(app, host="127.0.0.1", port=80)
-
-def app_map(request):
-    return "my_webapps", "webapp1"
-
-if __name__ == "__main__":
-    main()
-```
-
-Once that is configured, calling `abort(507)` anywhere in your handlers will raise that exception.
-
-If you do not provide a custom `507` error handler, the response will use your exception’s defined name,
-description, and status code to return a simple HTML page.
-
-If you do provide a matching error handler file such as `webapp1.507.py`, Cylinder will route the request
-through that handler and let you customize the response just like any other HTTP error.
-
-### abort() Redirects
-
-Cylinder also supports redirects through `abort()`.
-
-The built-in redirect codes are `301`, `302`, `303`, `307` and `308`
-
-The second argument to `abort()` is the redirect target, for example:
-
-```python
-def main(request, response, abort):
-    if not request.cookies.get("session_id"):
-        abort(302, "/login")
-```
-
-Redirects do not use `301.py`, `302.py`, and similar [exception handler files](#exception-handlers).
-Cylinder handles the redirect automatically.
-
-Late hooks still run unless the redirect is raised from the late hook itself, so late hooks can still
-modify headers on redirect responses.
 
 ### Exception handlers
 
@@ -516,7 +708,7 @@ In this layout:
 This makes it easy to return HTML error pages for most of a site while returning JSON errors for a specific
 subtree such as `/api/`.
 
-### Handling uncaught exceptions
+### Uncaught Exceptions
 
 Uncaught exceptions are treated as `500 Internal Server Error` responses.
 
@@ -561,7 +753,72 @@ def main(response, e):
 That can be useful while developing, but in production you would usually log the traceback and return a
 more generic response instead.
 
-## Extra parameters on `main()`
+### abort_extra
+
+`abort_extra` is an optional argument to `get_app()` that lets you register additional HTTP exception
+classes beyond the ones
+[Werkzeug provides by default](https://werkzeug.palletsprojects.com/en/stable/exceptions/#custom-errors).
+
+This extends both `abort()` and the corresponding error-handler file mechanism.
+
+For example, if you want to support `507 Insufficient Storage`, you can define your own exception class and
+pass it in through `abort_extra`:
+
+```python
+import cylinder
+import waitress
+import werkzeug
+
+class InsufficientStorage(werkzeug.exceptions.HTTPException):
+    code = 507
+    name = "Insufficient Storage"
+    description = "The server has insufficient storage to complete the request"
+
+def main():
+    app = cylinder.get_app(
+        app_map,
+        abort_extra={507: InsufficientStorage},
+    )
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1"
+
+if __name__ == "__main__":
+    main()
+```
+
+Once that is configured, calling `abort(507)` anywhere in your handlers will raise that exception.
+
+If you do not provide a custom `507` error handler, the response will use your exception’s defined name,
+description, and status code to return a simple HTML page.
+
+If you do provide a matching error handler file such as `webapp1.507.py`, Cylinder will route the request
+through that handler and let you customize the response just like any other HTTP error.
+
+### Redirects
+
+Cylinder also supports redirects through `abort()`.
+
+The built-in redirect codes are `301`, `302`, `303`, `307` and `308`
+
+The second argument to `abort()` is the redirect target, for example:
+
+```python
+def main(request, response, abort):
+    if not request.cookies.get("session_id"):
+        abort(302, "/login")
+```
+
+Redirects do not use `301.py`, `302.py`, and similar [exception handler files](#exception-handlers).
+Cylinder handles the redirect automatically.
+
+Late hooks still run unless the redirect is raised from the late hook itself, so late hooks can still
+modify headers on redirect responses.
+
+## Application composition
+
+### Extra parameters on `main()`
 
 In addition to the built-in parameters provided by the framework (`request`, `response`, `logger`, `abort`,
 and, in exception handlers, `e`), your handlers can also receive arbitrary extra parameters defined by your
@@ -651,543 +908,7 @@ Then your page modules can use `log` as a parameter instead of `logger`, and wri
 This is one of Cylinder’s main extension points: built-in request handling from the framework, plus
 application-specific dependencies passed in explicitly through `app_map()`.
 
-## HTML templates and Jinja2
-
-Cylinder does not include a built-in template engine. Instead, template rendering is meant to be added the
-same way as any other application dependency: define it in `cylinder_main.py` and pass it in through
-`app_map()`.
-
-For example, here is a minimal Jinja2 setup:
-
-```python
-import cylinder
-import waitress
-import jinja2
-
-jinja_env = jinja2.Environment(
-    loader=jinja2.FileSystemLoader("templates"),
-    auto_reload=True,
-    autoescape=jinja2.select_autoescape(),
-)
-
-def render_template(template_name, **context):
-    template = jinja_env.get_template(template_name)
-    return template.render(context)
-
-def main():
-    app = cylinder.get_app(app_map)
-    waitress.serve(app, host="127.0.0.1", port=80)
-
-def app_map(request):
-    return "my_webapps", "webapp1", {"render_template": render_template}
-
-if __name__ == "__main__":
-    main()
-```
-
-With that in place, any page module in the app can ask for `render_template` as a parameter to `main()`.
-
-A simple project layout might look like this:
-
-```text
-~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /templates
-        |-- hello.html
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-```
-
-Here is `webapp1.ex.get.py`:
-
-```python
-def main(response, render_template):
-    response.data = render_template("hello.html", name="Developer")
-    response.content_type = "text/html; charset=utf-8"
-    return response
-```
-
-Here is `hello.html`:
-
-```html
-<!doctype html>
-<html>
-    <body>
-        Hello, {{ name }}
-    </body>
-</html>
-```
-
-Visiting `/` will then return:
-
-```text
-Hello, Developer
-```
-
-This approach keeps Cylinder template-engine agnostic while still making common tools like Jinja2 easy to
-integrate.
-
-## Using database connections and ORMs like SQLAlchemy
-
-Database setup is often verbose enough that it makes sense to keep it in a separate module rather than
-inside `cylinder_main.py`.
-
-For example, with SQLAlchemy you might define your engine and session factory in `db.py`:
-
-```python
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-engine = create_engine("sqlite:///app.db")
-SessionLocal = sessionmaker(engine)
-
-# models, helpers, and other setup can live here too
-```
-
-Then import that module into `cylinder_main.py` and pass the session factory through `app_map()`:
-
-```python
-import cylinder
-import waitress
-import db
-
-def main():
-    app = cylinder.get_app(app_map)
-    waitress.serve(app, host="127.0.0.1", port=80)
-
-def app_map(request):
-    return "my_webapps", "webapp1", {"SessionLocal": db.SessionLocal}
-
-if __name__ == "__main__":
-    main()
-```
-
-Once that is in place, any page module in the app can ask for `SessionLocal` as a parameter to `main()`.
-
-SQLAlchemy models and query helpers can be imported normally inside page modules. Stateful objects such as
-the engine or session factory are usually better passed in through `app_map()`.
-
-For example:
-
-```python
-from sqlalchemy import select
-from models import User
-
-def main(response, SessionLocal):
-    with SessionLocal() as session:
-        users = session.execute(select(User)).scalars().all()
-        response.data = f"{len(users)} users found"
-    return response
-```
-
-The important idea is that shared database objects are initialized once, then passed into handlers
-explicitly just like any other application dependency.
-
-## Sessions
-
-Cylinder does not implement sessions for you.
-
-That is intentional. There is no single session design that fits every application well. Some frameworks
-store the full session in the browser, which can scale nicely but makes it easy to misuse sessions for
-sensitive data. Others store session data on the server and use a session ID cookie, which can be simpler
-to reason about but requires shared storage if the application runs on multiple servers.
-
-Cylinder leaves that choice to the developer.
-
-A minimal server-side session implementation might look like this:
-
-```python
-import cylinder
-import waitress
-
-import json
-import secrets
-import sqlite3
-from collections import UserDict
-
-def main():
-    app = cylinder.get_app(app_map)
-    waitress.serve(app, host="127.0.0.1", port=80)
-
-def app_map(request, response):
-    session_id = request.cookies.get("session_id") or secrets.token_urlsafe(32)
-    response.set_cookie("session_id", session_id, httponly=True) # should also set `secure=True` in production
-    session = SessionDict(session_id)
-    return "my_webapps", "webapp1", {
-        "session": session,
-        "session_id": session_id,
-    }
-
-class SessionDict(UserDict):
-    def __init__(self, uid):
-        self.uid = uid
-        self.conn = sqlite3.connect("sessions.sqlite")
-        self.conn.execute(
-            "CREATE TABLE IF NOT EXISTS store (uid TEXT PRIMARY KEY, data TEXT)"
-        )
-        row = self.conn.execute(
-            "SELECT data FROM store WHERE uid=?", (self.uid,)
-        ).fetchone()
-        super().__init__(json.loads(row[0]) if row else {})
-
-    def _save(self):
-        self.conn.execute(
-            "INSERT OR REPLACE INTO store VALUES (?, ?)",
-            (self.uid, json.dumps(self.data)),
-        )
-        self.conn.commit()
-
-    def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-        self._save()
-
-    def __delitem__(self, key):
-        super().__delitem__(key)
-        self._save()
-
-if __name__ == "__main__":
-    main()
-```
-
-You could then use that session in a page module like this:
-
-```python
-def main(response, request, session, session_id):
-    visits = session.get("visits", 0)
-    session["visits"] = visits + 1
-    response.data = f"visits: {visits}"
-    return response
-```
-
-In this example, session data is stored in SQLite and linked to the client through a `session_id` cookie.
-
-If the application later needs to scale beyond a single server, the same pattern can be reused with shared
-storage such as PostgreSQL, Redis, or another external system.
-
-You could also, for example, attach session state to [g]{#the-g-object} from an early hook instead of
-passing it directly from `app_map()`. That can be useful if different parts of the site need different
-cookie or authentication behavior, such as a browser-facing site and a separate `/api` subtree.
-
-## The `g` object
-
-Users coming from Flask may be familiar with the
-[Flask `g` object](https://flask.palletsprojects.com/en/stable/appcontext/#storing-data). Cylinder does not
-implement the `g` object for you because Cylinder's architecture makes it trivial to do so yourself.
-
-You can create the `g` object like so:
-
-```python
-import cylinder
-import waitress
-from types import SimpleNamespace
-
-def main():
-    app = cylinder.get_app(app_map)
-    waitress.serve(app, host="127.0.0.1", port=80)
-
-def app_map(request):
-    return "my_webapps", "webapp1", {"g": SimpleNamespace()}
-
-if __name__ == "__main__":
-    main()
-```
-
-## Thread safety
-
-Thread safety in Cylinder works the same way it does in any other WSGI application.
-
-Each request may be handled concurrently, depending on the server you are using. The examples in these docs
-use [Waitress](https://pypi.org/project/waitress/), which uses multi-threading. Other servers may use
-multi-processing.
-
-If your application shares state between requests, and that state is not concurrency-safe on its own, you
-are responsible for protecting it with the appropriate synchronization primitive such as a lock.
-
-Cylinder makes that easy to do by passing shared objects in through `app_map()`.
-
-For example, in `cylinder_main.py`:
-
-```python
-import cylinder
-import waitress
-import threading
-
-lock = threading.Lock()
-
-def main():
-    app = cylinder.get_app(app_map)
-    waitress.serve(app, host="127.0.0.1", port=80)
-
-def app_map(request):
-    return "my_webapps", "webapp1", {"lock": lock}
-
-if __name__ == "__main__":
-    main()
-```
-
-Now any page module in the app can ask for that lock as a parameter:
-
-```python
-def main(request, response, lock):
-    with lock:
-        # do something that is not thread-safe
-        pass
-    return response
-```
-
-This pattern is useful for protecting shared in-memory data structures, coordinating access to
-non-thread-safe resources, or wrapping code that must not run concurrently.
-
-## Static files
-
-Cylinder can also serve static files directly from the filesystem.
-
-For example:
-
-```text
-~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-        |-- webapp1.500.py
-        |-- /webapp1
-            |-- example1.json
-            |-- foo.400.py
-            |-- /foo
-                |-- example2.css
-```
-
-In this layout:
-
--   a request to `/example1.json` returns the contents of `example1.json`
--   a request to `/foo/example2.css` returns the contents of `example2.css`
-
-Cylinder sets the `Content-Type` header based on the file extension using Python’s standard library
-[`mimetypes`](https://docs.python.org/3/library/mimetypes.html). In the example above, the responses would
-use `application/json` and `text/css` respectively.
-
-Static files are served only when the URL path matches the file path exactly. Python source files are never
-served.
-
-Static file responses still pass through the normal hook system, so early hooks and late hooks can inspect
-or modify the response just as they can for page handlers.
-
-## Why there are no index files
-
-Many web frameworks and file-based routers revolve around names like `index.html`, `index.php`, or
-`page.tsx`.
-
-Cylinder intentionally does not.
-
-One reason is readability. In larger projects, repeated index-style filenames tend to create “index soup”:
-you open several tabs in your editor and they all have the same name, even though they represent completely
-different routes.
-
-Cylinder avoids that by naming each handler after the final path segment it handles. That keeps route
-structure visible in the filesystem while also making files easier to recognize in an editor.
-
-For example, if you are working on `/api/v2/reports/company/payments`, the relevant handlers might look
-like this:
-
-```text
-~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-        |-- /webapp1
-            |-- /API
-                |-- /v2
-                    |-- reports.ex.get.py
-                    |-- /reports
-                        |-- company.ex.get.py
-                        |-- /company
-                            |-- payments.ex.get.py
-```
-
-In this example, only `GET` handlers are shown. If you also wanted to support
-`PUT /api/v2/reports/company/payments`, you could add `payments.ex.put.py` in the same directory, or use
-`payments.ex.default.py` if you want one file to handle multiple methods.
-
-The important thing to notice is that there is no `index.ex.get.py`, because there does not need to be.
-
-In Cylinder, a route segment can correspond to both a directory and a file. So even though
-`/reports/company` corresponds to a `company` directory inside `/reports`, it can also be handled by
-`company.ex.get.py` in that same location.
-
-This keeps filenames meaningful without giving up nested route structure.
-
-## Dynamic paths / dynamic route handling
-
-Not every URL has a simple 1:1 relationship with the filesystem.
-
-For example, in a REST API you might expect:
-
--   `POST /API/v1/users` to create a user and return an ID
--   `GET /API/v1/users/<id>` to return a specific user
--   `GET /API/v1/users?lname=Smith` to search for users by last name
--   `PUT /API/v1/users/<id>` to update a specific user
--   `DELETE /API/v1/users/<id>` to delete a specific user
-
-Cylinder does not use named dynamic route declarations. Instead, it matches each request to the most
-specific handler on disk, and any remaining path information stays available on the request object for your
-application code to interpret.
-
-A layout for the example above might look like this:
-
-```text
-~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-        |-- /webapp1
-            |-- /API
-                |-- v1.ex.default.py
-                |-- /v1
-                    |-- users.ex.post.py
-                    |-- users.ex.get.py
-                    |-- users.ex.put.py
-                    |-- users.ex.delete.py
-```
-
-In this layout:
-
--   `POST /API/v1/users` is handled by `users.ex.post.py`
--   `GET /API/v1/users` is handled by `users.ex.get.py`
--   `PUT /API/v1/users/<id>` is handled by `users.ex.put.py`
--   `DELETE /API/v1/users/<id>` is handled by `users.ex.delete.py`
-
-The important point is that Cylinder routes the request to the most specific matching handler file. It does
-not matter that `/users/<id>` contains dynamic path data after `/users`; that remaining path can be
-interpreted by your handler code using the request object.
-
-For example, a `HEAD` request to `/API/v1/users` would be handled by `v1.ex.default.py`, because there is
-no more specific `HEAD` handler for that route. A `GET` request to `/API/v1/users` would still be handled
-by `users.ex.get.py`.
-
-### Accessing the remaining path
-
-Cylinder does not parse dynamic path segments into named route parameters for you.
-
-Instead, your handler receives the normal Werkzeug `request` object, and you can inspect the request path
-directly and interpret any remaining segments however your application needs.
-
-For example, with this layout:
-
-```text
-~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-        |-- /webapp1
-            |-- /API
-                |-- /v1
-                    |-- users.ex.get.py
-```
-
-a `GET` request to `/API/v1/users` and a request to `/API/v1/users/123` would both be handled by
-`users.ex.get.py`.
-
-Inside that handler, you can examine `request.path` and parse the remainder yourself:
-
-```python
-def main(request, response):
-    path = request.path.rstrip("/")
-    parts = path.split("/")
-
-    if len(parts) == 4:
-        # /API/v1/users
-        response.data = "list users"
-    elif len(parts) == 5:
-        # /API/v1/users/123
-        user_id = parts[4]
-        response.data = f"get user {user_id}"
-    else:
-        response.status_code = 404
-        response.data = "not found"
-
-    return response
-```
-
-Query string parameters continue to work normally through Werkzeug as well:
-
-```python
-def main(request, response):
-    last_name = request.args.get("lname")
-    response.data = f"searching for lname={last_name}"
-    return response
-```
-
-The important point is that Cylinder handles selecting the correct file, while your application code
-remains responsible for interpreting any dynamic data that comes after that match.
-
-## Hooks
-
-Cylinder supports two kinds of hooks:
-
--   `early hooks`, which run before the main page handler
--   `late hooks`, which run after the main page handler
-
-Hooks are defined the same way as page handlers: by placing files in the filesystem with special
-extensions.
-
-For example:
-
-```text
-~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-        |-- /webapp1
-            |-- /API
-                |-- v2.lh.get.py
-                |-- /v2
-                    |-- reports.eh.get.py
-                    |-- reports.ex.get.py
-                    |-- /reports
-                        |-- company.ex.get.py
-                        |-- /company
-                            |-- payments.ex.get.py
-                    |-- users.ex.get.py
-```
-
-In this layout:
-
--   `v2.lh.get.py` is a late hook for requests under `/API/v2/*`
--   `reports.eh.get.py` is an early hook for requests under `/API/v2/reports/*`
-
-So a `GET` request to `/API/v2/reports/company/*` would flow like this after `app_map()`:
-
-1.  `main()` in `reports.eh.get.py`
-2.  `main()` in `company.ex.get.py`
-3.  `main()` in `v2.lh.get.py`
-
-A `GET` request to `/API/v2/users` would flow like this instead:
-
-1.  `main()` in `users.ex.get.py`
-2.  `main()` in `v2.lh.get.py`
-
-Hooks use the same `main()` function pattern as normal page handlers, and they can receive the same
-parameters.
-
-Their main purpose is to avoid repetition by letting shared logic run across a directory subtree. Common
-examples include authentication checks, loading shared request data, setting default headers, or enforcing
-response policies.
-
-Early hooks are a good place to set defaults before the page handler runs. Late hooks are a good place to
-enforce final response behavior, because they run after the page handler and get the last word.
-
-For example, if `v2.lh.get.py` contains:
-
-```python
-def main(response):
-    response.headers["Content-Security-Policy"] = "default-src 'self';"
-    return response
-```
-
-then a different `Content-Security-Policy` set earlier in `company.ex.get.py` would be overwritten by the
-late hook.
-
-## How configuration and environments are handled
+### Configuration and Environments
 
 Cylinder keeps framework-level configuration intentionally small. The built-in options on `get_app()` are:
 
@@ -1287,7 +1008,250 @@ In short, Cylinder does not separate “configuration” from application code v
 configuration is simply expressed in Python, using the same routing, parameter, and hook mechanisms as the
 rest of the framework.
 
-## Testing
+### HTML templates and Jinja2
+
+Cylinder does not include a built-in template engine. Instead, template rendering is meant to be added the
+same way as any other application dependency: define it in `cylinder_main.py` and pass it in through
+`app_map()`.
+
+For example, here is a minimal Jinja2 setup:
+
+```python
+import cylinder
+import waitress
+import jinja2
+
+jinja_env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader("templates"),
+    auto_reload=True,
+    autoescape=jinja2.select_autoescape(),
+)
+
+def render_template(template_name, **context):
+    template = jinja_env.get_template(template_name)
+    return template.render(**context)
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1", {"render_template": render_template}
+
+if __name__ == "__main__":
+    main()
+```
+
+With that in place, any page module in the app can ask for `render_template` as a parameter to `main()`.
+
+A simple project layout might look like this:
+
+```text
+~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /templates
+        |-- hello.html
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+```
+
+Here is `webapp1.ex.get.py`:
+
+```python
+def main(response, render_template):
+    response.data = render_template("hello.html", name="Developer")
+    response.content_type = "text/html; charset=utf-8"
+    return response
+```
+
+Here is `hello.html`:
+
+```html
+<!doctype html>
+<html>
+    <body>
+        Hello, {{ name }}
+    </body>
+</html>
+```
+
+Visiting `/` will then return:
+
+```text
+Hello, Developer
+```
+
+This approach keeps Cylinder template-engine agnostic while still making common tools like Jinja2 easy to
+integrate.
+
+### databases / SQLAlchemy
+
+Database setup is often verbose enough that it makes sense to keep it in a separate module rather than
+inside `cylinder_main.py`.
+
+For example, with SQLAlchemy you might define your engine and session factory in `db.py`:
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine("sqlite:///app.db")
+SessionLocal = sessionmaker(engine)
+
+# models, helpers, and other setup can live here too
+```
+
+Then import that module into `cylinder_main.py` and pass the session factory through `app_map()`:
+
+```python
+import cylinder
+import waitress
+import db
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1", {"SessionLocal": db.SessionLocal}
+
+if __name__ == "__main__":
+    main()
+```
+
+Once that is in place, any page module in the app can ask for `SessionLocal` as a parameter to `main()`.
+
+SQLAlchemy models and query helpers can be imported normally inside page modules. Stateful objects such as
+the engine or session factory are usually better passed in through `app_map()`.
+
+For example:
+
+```python
+from sqlalchemy import select
+from models import User
+
+def main(response, SessionLocal):
+    with SessionLocal() as session:
+        users = session.execute(select(User)).scalars().all()
+        response.data = f"{len(users)} users found"
+    return response
+```
+
+The important idea is that shared database objects are initialized once, then passed into handlers
+explicitly just like any other application dependency.
+
+### Sessions
+
+Cylinder does not implement sessions for you.
+
+That is intentional. There is no single session design that fits every application well. Some frameworks
+store the full session in the browser, which can scale nicely but makes it easy to misuse sessions for
+sensitive data. Others store session data on the server and use a session ID cookie, which can be simpler
+to reason about but requires shared storage if the application runs on multiple servers.
+
+Cylinder leaves that choice to the developer.
+
+A minimal server-side session implementation might look like this:
+
+```python
+import cylinder
+import waitress
+
+import json
+import secrets
+import sqlite3
+from collections import UserDict
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request, response):
+    session_id = request.cookies.get("session_id") or secrets.token_urlsafe(32)
+    response.set_cookie("session_id", session_id, httponly=True) # should also set `secure=True` in production
+    session = SessionDict(session_id)
+    return "my_webapps", "webapp1", {
+        "session": session,
+        "session_id": session_id,
+    }
+
+class SessionDict(UserDict):
+    def __init__(self, uid):
+        self.uid = uid
+        self.conn = sqlite3.connect("sessions.sqlite")
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS store (uid TEXT PRIMARY KEY, data TEXT)"
+        )
+        row = self.conn.execute(
+            "SELECT data FROM store WHERE uid=?", (self.uid,)
+        ).fetchone()
+        super().__init__(json.loads(row[0]) if row else {})
+
+    def _save(self):
+        self.conn.execute(
+            "INSERT OR REPLACE INTO store VALUES (?, ?)",
+            (self.uid, json.dumps(self.data)),
+        )
+        self.conn.commit()
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self._save()
+
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        self._save()
+
+if __name__ == "__main__":
+    main()
+```
+
+You could then use that session in a page module like this:
+
+```python
+def main(response, request, session, session_id):
+    visits = session.get("visits", 0)
+    session["visits"] = visits + 1
+    response.data = f"visits: {visits}"
+    return response
+```
+
+In this example, session data is stored in SQLite and linked to the client through a `session_id` cookie.
+
+If the application later needs to scale beyond a single server, the same pattern can be reused with shared
+storage such as PostgreSQL, Redis, or another external system.
+
+You could also, for example, attach session state to [g]{#the-g-object} from an early hook instead of
+passing it directly from `app_map()`. That can be useful if different parts of the site need different
+cookie or authentication behavior, such as a browser-facing site and a separate `/api` subtree.
+
+### The `g` object
+
+Users coming from Flask may be familiar with the
+[Flask `g` object](https://flask.palletsprojects.com/en/stable/appcontext/#storing-data). Cylinder does not
+implement the `g` object for you because Cylinder's architecture makes it trivial to do so yourself.
+
+You can create the `g` object like so:
+
+```python
+import cylinder
+import waitress
+from types import SimpleNamespace
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1", {"g": SimpleNamespace()}
+
+if __name__ == "__main__":
+    main()
+```
+
+## Operations and development
+
+### Testing
 
 Like [Flask](https://flask.palletsprojects.com/en/stable/testing/#sending-requests-with-the-test-client),
 Cylinder exposes a
@@ -1339,7 +1303,7 @@ def test_root(webapp1_app, caplog):
 This makes it easy to test Cylinder apps using the same request/response patterns you would use in
 production.
 
-## Import caching and reload behavior
+### Import caching and reload behavior
 
 Cylinder does not rely on a separate development reload mode for normal page changes.
 
@@ -1366,7 +1330,7 @@ In summary:
 In practice, this means most request-handling code behaves dynamically, while application bootstrap code
 behaves like normal long-lived Python process state.
 
-## Logging configuration
+### Logging configuration
 
 Cylinder’s built-in logging can be customized through `get_app()` and through the log formatter.
 
@@ -1411,7 +1375,7 @@ Cylinder uses a queue for logging so that request handling does not have to wait
 returning a response. This is especially useful when the handler is slow, such as
 [`SMTPHandler`](https://docs.python.org/3/library/logging.handlers.html#smtphandler).
 
-## request_id_header
+### request_id_header
 
 `request_id_header` is an optional argument to `get_app()` that specifies which incoming HTTP header should
 be used as the request ID.
@@ -1424,9 +1388,9 @@ If left unconfigured, or the configured header is missing, Cylinder generates a 
 The request ID is included in log records so that all log entries for a single request can be correlated
 easily.
 
-## Streaming
+### Streaming
 
-### Streaming response bodies
+#### Streaming response bodies
 
 In some cases, you may want to send a response incrementally instead of building the entire response body
 in memory first. This is commonly used for long-running processes, server-sent data, or large outputs.
@@ -1464,7 +1428,7 @@ receiving data immediately, rather than waiting for the entire response to be co
 Streaming responses still pass through hooks in the normal way, but once iteration begins, the response
 body is sent progressively as data is yielded.
 
-### Streaming request bodies
+#### Streaming request bodies
 
 Just as responses can be streamed out, request bodies can also be consumed incrementally.
 
@@ -1500,34 +1464,11 @@ If you access higher-level helpers like `request.data`, `request.form`, or `requ
 will read and buffer the full request body for you. To keep streaming behavior, work directly with
 `request.stream`.
 
-## Type hints and editor support
-
-Cylinder does not require type hints, but adding them can make development much easier. Most modern editors
-(such as VS Code or PyCharm) use type hints to provide:
-
--   autocomplete suggestions
--   inline documentation
--   error highlighting
--   better navigation
-
-For example, you can annotate `request` and `response` using Werkzeug’s types:
-
-```python
-from werkzeug.wrappers import Request, Response
-
-def main(request: Request, response: Response):
-    response.data = request.path
-    return response
-```
-
-This allows your editor to understand what `request` and `response` are, so attributes like `request.args`,
-`request.cookies`, or `response.headers` will autocomplete correctly.
-
-## Safeguards
+### Safeguards
 
 Cylinder includes a few small safeguards to make request handling more predictable.
 
-### Shallow requests in `app_map()` and early hooks
+#### Shallow requests in `app_map()` and early hooks
 
 During `app_map()` and early hooks, Cylinder uses the Werkzeug request object in
 [shallow](https://werkzeug.palletsprojects.com/en/stable/wrappers/#werkzeug.wrappers.Request.shallow) mode.
@@ -1565,7 +1506,7 @@ def main(request, response):
     return response
 ```
 
-### Handlers must return the same response object
+#### Handlers must return the same response object
 
 Cylinder creates one `response` object for the request and passes that same object through hooks, page
 handlers, and exception handlers.
@@ -1599,7 +1540,7 @@ ValueError: must return the same response passed in
 This rule keeps control flow simpler and makes it easier for hooks and handlers to cooperate on the same
 response.
 
-### Why these rules exist
+#### Why these rules exist
 
 Both protections are there to reduce surprising behavior:
 
@@ -1612,3 +1553,72 @@ The general pattern in Cylinder is:
 -   inspect request metadata in `app_map()` and early hooks
 -   read the request body in the page handler
 -   modify the provided `response` object and return that same object
+
+### Thread safety
+
+Thread safety in Cylinder works the same way it does in any other WSGI application.
+
+Each request may be handled concurrently, depending on the server you are using. The examples in these docs
+use [Waitress](https://pypi.org/project/waitress/), which uses multithreading. Other servers may use
+multi-processing.
+
+If your application shares state between requests, and that state is not concurrency-safe on its own, you
+are responsible for protecting it with the appropriate synchronization primitive such as a lock.
+
+Cylinder makes that easy to do by passing shared objects in through `app_map()`.
+
+For example, in `cylinder_main.py`:
+
+```python
+import cylinder
+import waitress
+import threading
+
+lock = threading.Lock()
+
+def main():
+    app = cylinder.get_app(app_map)
+    waitress.serve(app, host="127.0.0.1", port=80)
+
+def app_map(request):
+    return "my_webapps", "webapp1", {"lock": lock}
+
+if __name__ == "__main__":
+    main()
+```
+
+Now any page module in the app can ask for that lock as a parameter:
+
+```python
+def main(request, response, lock):
+    with lock:
+        # do something that is not thread-safe
+        pass
+    return response
+```
+
+This pattern is useful for protecting shared in-memory data structures, coordinating access to
+non-thread-safe resources, or wrapping code that must not run concurrently.
+
+### Type hints and editor support
+
+Cylinder does not require type hints, but adding them can make development much easier. Most modern editors
+(such as VS Code or PyCharm) use type hints to provide:
+
+-   autocomplete suggestions
+-   inline documentation
+-   error highlighting
+-   better navigation
+
+For example, you can annotate `request` and `response` using Werkzeug’s types:
+
+```python
+from werkzeug.wrappers import Request, Response
+
+def main(request: Request, response: Response):
+    response.data = request.path
+    return response
+```
+
+This allows your editor to understand what `request` and `response` are, so attributes like `request.args`,
+`request.cookies`, or `response.headers` will autocomplete correctly.

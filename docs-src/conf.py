@@ -9,7 +9,7 @@
 
 project = "cylinder"
 author = "Chris Wheeler"
-release = "0.1"
+release = "0.2"
 
 
 # -- General configuration ---------------------------------------------------

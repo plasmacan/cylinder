@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Table Of Contents &mdash; cylinder 0.1 documentation</title>
+  <title>Table Of Contents &mdash; cylinder 0.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=19645805"></script>
+      <script src="../_static/documentation_options.js?v=2e2e1c2b"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -83,49 +83,60 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../">Cylinder</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../#philosophy">Philosophy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#quickstart">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../#quickstart">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../#routing-basics">Routing basics</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../#implementing-pages">Implementing pages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#why-there-are-no-index-files">Why there are no index files</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../#http-method-routing">HTTP method routing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#how-requests-are-matched">How requests are matched</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#static-files">Static files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#dynamic-paths-dynamic-route-handling">Dynamic paths / dynamic route handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../#accessing-the-remaining-path">Accessing the remaining path</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../#how-requests-are-matched">How requests are matched</a><ul>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../#request-lifecycle">Request lifecycle</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../#the-request-and-response-objects">The request and response objects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#the-parameters-on-main">The parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#raising-abort-exceptions">Raising <code class="docutils literal notranslate"><span class="pre">abort()</span></code> exceptions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#abort-extra">abort_extra</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#abort-redirects">abort() Redirects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#handler-parameters">Handler Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#hooks">Hooks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../#error-handling">Error handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../#abort">abort()</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../#exception-handlers">Exception handlers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#handling-uncaught-exceptions">Handling uncaught exceptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#uncaught-exceptions">Uncaught Exceptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#abort-extra">abort_extra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#redirects">Redirects</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../#extra-parameters-on-main">Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#html-templates-and-jinja2">HTML templates and Jinja2</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#using-database-connections-and-orms-like-sqlalchemy">Using database connections and ORMs like SQLAlchemy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#sessions">Sessions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#the-g-object">The <code class="docutils literal notranslate"><span class="pre">g</span></code> object</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#static-files">Static files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#why-there-are-no-index-files">Why there are no index files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#dynamic-paths-dynamic-route-handling">Dynamic paths / dynamic route handling</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../#accessing-the-remaining-path">Accessing the remaining path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../#application-composition">Application composition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../#extra-parameters-on-main">Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#configuration-and-environments">Configuration and Environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#html-templates-and-jinja2">HTML templates and Jinja2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#databases-sqlalchemy">databases / SQLAlchemy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#sessions">Sessions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#the-g-object">The <code class="docutils literal notranslate"><span class="pre">g</span></code> object</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../#hooks">Hooks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#how-configuration-and-environments-are-handled">How configuration and environments are handled</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#testing">Testing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#import-caching-and-reload-behavior">Import caching and reload behavior</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#logging-configuration">Logging configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#request-id-header">request_id_header</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#streaming">Streaming</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../#streaming-response-bodies">Streaming response bodies</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#streaming-request-bodies">Streaming request bodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../#operations-and-development">Operations and development</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../#testing">Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#import-caching-and-reload-behavior">Import caching and reload behavior</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#logging-configuration">Logging configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#request-id-header">request_id_header</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#streaming">Streaming</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../#streaming-response-bodies">Streaming response bodies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../#streaming-request-bodies">Streaming request bodies</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../#type-hints-and-editor-support">Type hints and editor support</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../#safeguards">Safeguards</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../#shallow-requests-in-app-map-and-early-hooks">Shallow requests in <code class="docutils literal notranslate"><span class="pre">app_map()</span></code> and early hooks</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#handlers-must-return-the-same-response-object">Handlers must return the same response object</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../#why-these-rules-exist">Why these rules exist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#safeguards">Safeguards</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../#shallow-requests-in-app-map-and-early-hooks">Shallow requests in <code class="docutils literal notranslate"><span class="pre">app_map()</span></code> and early hooks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../#handlers-must-return-the-same-response-object">Handlers must return the same response object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../#why-these-rules-exist">Why these rules exist</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../#thread-safety">Thread safety</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../#type-hints-and-editor-support">Type hints and editor support</a></li>
 </ul>
 </li>
 </ul>

@@ -14,14 +14,6 @@ Key features include:
 Cylinder aims to provide just enough structure to guide development without
 hiding how the application works.
 
-# Changes in 0.2:
-# removed g
-# allow no pram dict return
-# pass none into functions
-# disabled X-Request-ID
-# log renamed to "logger"
-# log_queue_length is now module-level
-
 """
 
 import importlib.util
@@ -46,7 +38,7 @@ __author__ = "Chris Wheeler, Nick Gray"
 __copyright__ = "Copyright 2026, The Plasma Foundation Inc."
 __credits__ = ["Chris Wheeler", "Nick Gray"]
 __license__ = "Apache-2.0"
-__version__ = "v0.1.4"
+__version__ = "v0.2.1"
 __email__ = "Chris Wheeler <grintor@gmail.com>"
 __status__ = "Production"
 
