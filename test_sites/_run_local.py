@@ -28,7 +28,7 @@ def main():
     waitress.serve(app, host="127.0.0.42", port=80)
 
 
-def app_map(request, g):
+def app_map(request):
     return (
         this_file_directory,
         "minimum_site",
