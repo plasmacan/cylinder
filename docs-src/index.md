@@ -2,7 +2,8 @@
 
 Cylinder is a small, opinionated WSGI web framework built on
 [Werkzeug](https://werkzeug.palletsprojects.com/en/2.1.x/serving/). It is designed for developers who want
-web applications to stay simple, readable, and predictable.
+web applications to stay simple, readable, and predictable. The framework is implemented as a single file
+with [less than 400 lines of code](https://github.com/plasmacan/cylinder/blob/main/src/cylinder.py)
 
 Instead of layering on a large stack of framework abstractions, Cylinder builds on Werkzeug’s proven HTTP
 and WSGI foundations and adds structure through file-based routing. It aims to sit between the two common
