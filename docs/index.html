@@ -58,20 +58,16 @@
 <li class="toctree-l3"><a class="reference internal" href="#abort-redirects">abort() Redirects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exception-handlers">Exception handlers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#handling-uncaught-exceptions">Handling uncaught exceptions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#extra-parameters-on-main">Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#choosing-names-for-extra-parameters">Choosing names for extra parameters</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#html-templates-and-jinja2">HTML templates and Jinja2</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#static-files">Static files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#why-there-are-no-index-files">Why there are no index files</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#using-database-connections-and-orms-like-sqlalchemy">Using database connections and ORMs like SQLAlchemy</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extra-parameters-on-main">Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#html-templates-and-jinja2">HTML templates and Jinja2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-database-connections-and-orms-like-sqlalchemy">Using database connections and ORMs like SQLAlchemy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sessions">Sessions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-g-object">The <code class="docutils literal notranslate"><span class="pre">g</span></code> object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#static-files">Static files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-there-are-no-index-files">Why there are no index files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dynamic-paths-dynamic-route-handling">Dynamic paths / dynamic route handling</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#accessing-the-remaining-path">Accessing the remaining path</a></li>
 </ul>
@@ -87,10 +83,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#streaming-request-bodies">Streaming request bodies</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#type-hints-and-editor-support">Type hints and editor support</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#typing-other-parameters">Typing other parameters</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#type-hints-and-editor-support">Type hints and editor support</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#safeguards">Safeguards</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#shallow-requests-in-app-map-and-early-hooks">Shallow requests in <code class="docutils literal notranslate"><span class="pre">app_map()</span></code> and early hooks</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#handlers-must-return-the-same-response-object">Handlers must return the same response object</a></li>
@@ -140,10 +133,10 @@
 web applications to stay simple, readable, and predictable.</p>
 <p>Instead of layering on a large stack of framework abstractions, Cylinder builds on Werkzeug’s proven HTTP
 and WSGI foundations and adds structure through file-based routing. It aims to sit between the two common
-extremes: less ad hoc than a microframework, but lighter and more transparent than a full-stack framework.</p>
+extremes: less ad hoc than a microframework, but lighter and more transparent than a full stack framework.</p>
 <p>The goal is straightforward: make it easy to understand how requests flow through an application, keep the
 project structure visible in the filesystem, and minimize setup and boilerplate.</p>
-<p>Plasma is the nonprofit software foundation that supports Cylinder’s ongoing development.
+<p>Plasma is the nonprofit software foundation that supports the ongoing development of Cylinder.
 <a class="reference external" href="https://www.guidestar.org/profile/88-3345768">The Plasma Foundation Inc.</a> is a 501(c)(3) founded by
 <a class="reference external" href="http://tier2.tech/">Tier2 Technologies</a> to support software that benefits the world at large.</p>
 <section id="philosophy">
@@ -151,7 +144,7 @@ project structure visible in the filesystem, and minimize setup and boilerplate.
 <p>Most Python web frameworks make a tradeoff:</p>
 <ul class="simple">
 <li><p><strong>microframeworks</strong> stay out of your way, but leave project structure and conventions up to each team</p></li>
-<li><p><strong>full-stack frameworks</strong> provide structure, but often bring layers, conventions, and abstractions you
+<li><p><strong>full stack frameworks</strong> provide structure, but often bring layers, conventions, and abstractions you
 may not want</p></li>
 </ul>
 <p>Cylinder is designed to sit in the middle.</p>
@@ -161,9 +154,8 @@ exceptions, and the general mechanics of web applications. Instead of rebuilding
 uses it directly and adds a simpler application structure on top.</p>
 <p>Its main opinionated choice is <strong>file-based routing</strong>.</p>
 <p>With file-based routing, the shape of the application is visible in the filesystem. You can look at a
-project tree and quickly understand what URLs exist, where their handlers live, and how a request will move
-through the app. That lowers mental overhead, makes onboarding easier, and keeps growing codebases easier
-to navigate.</p>
+project tree and quickly understand what URLs exist, where their handlers live, and request-response flow.
+That lowers mental overhead, makes onboarding easier, and keeps growing codebases easier to navigate.</p>
 <p>It also reduces boilerplate. You do not need to maintain a separate routing table, scatter route
 declarations across the codebase, or introduce extra layers just to map URLs to code. The directory
 structure itself becomes part of the API surface.</p>
@@ -196,11 +188,11 @@ request:</p>
     <span class="c1"># Inspect the incoming request here if you want to choose</span>
     <span class="c1"># between multiple webapps based on hostname, headers, etc.</span>
 
-    <span class="c1"># app_map() returns a tuple of:</span>
+    <span class="c1"># app_map() returns a tuple of two or three items:</span>
     <span class="c1"># 1) site_dir:  the root directory containing your webapps</span>
     <span class="c1"># 2) site_name: the webapp that should handle this request</span>
-    <span class="c1"># 3) appended_args: extra parameters that can be passed into page modules</span>
-    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{}</span>
+    <span class="c1"># 3) optionally: any extra parameters on `main()`</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
@@ -248,7 +240,7 @@ specific file for that route.</p>
 <p>Cylinder uses the filename to determine both the type of handler and the HTTP method it responds to.</p>
 <p>In <code class="docutils literal notranslate"><span class="pre">bar.ex.get.py</span></code>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">.ex</span></code> means this is a standard executable page handler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.ex</span></code> means this is a standard executable page handler (and not a <a class="reference internal" href="#hooks">hook</a>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">.get</span></code> means it handles <code class="docutils literal notranslate"><span class="pre">GET</span></code> requests</p></li>
 </ul>
 <p>So if you want <code class="docutils literal notranslate"><span class="pre">/foo/bar</span></code> to handle <code class="docutils literal notranslate"><span class="pre">POST</span></code> requests as well, you would add a second file named
@@ -264,20 +256,23 @@ method for <code class="docutils literal notranslate"><span class="pre">/foo/bar
         |-- webapp1.ex.get.py
         |-- /webapp1
             |-- /foo
-                |-- bar.ex.get.py
-                |-- bar.ex.post.py
-                |-- bar.ex.default.py
+                |-- bar.ex.get.py      &lt;== handles: GET /foo/bar
+                |-- bar.ex.post.py     &lt;== handles: POST /foo/bar
+                |-- bar.ex.default.py  &lt;== handles: PUT, DELETE, HEAD /foo/bar
 </pre></div>
 </div>
-<p>With that layout:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/foo/bar</span></code> is handled by <code class="docutils literal notranslate"><span class="pre">bar.ex.get.py</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/foo/bar</span></code> is handled by <code class="docutils literal notranslate"><span class="pre">bar.ex.post.py</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">PUT</span> <span class="pre">/foo/bar</span></code>, <code class="docutils literal notranslate"><span class="pre">DELETE</span> <span class="pre">/foo/bar</span></code>, <code class="docutils literal notranslate"><span class="pre">HEAD</span> <span class="pre">/foo/bar</span></code>, and any other unmatched method are handled by
-<code class="docutils literal notranslate"><span class="pre">bar.ex.default.py</span></code></p></li>
-</ul>
 <p>Meanwhile, <code class="docutils literal notranslate"><span class="pre">webapp1.ex.get.py</span></code> continues to handle <code class="docutils literal notranslate"><span class="pre">GET</span></code> requests everywhere else that does not have a more
 specific match.</p>
+<p>To behave like a typical web app, and return 404 responses for any unimplemented pages, you could edit
+<code class="docutils literal notranslate"><span class="pre">webapp1.ex.get.py</span></code> like so:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span> <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="s2">&quot;Hello World!&quot;</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>More details about the abort() function are documented in the
+<a class="reference internal" href="#raising-abort-exceptions">Raising abort() exceptions</a> section below.</p>
 </section>
 </section>
 <section id="how-requests-are-matched">
@@ -347,14 +342,15 @@ applies hooks and error handlers around that choice.</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">response</span></code> is an empty
-<a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/quickstart/#responses">Werkzeug Response</a> object that
-Cylinder creates for you before calling your handler. Your job is to modify it as needed and return it.</p>
+<a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/wrappers/#werkzeug.wrappers.Response">Werkzeug Response</a>
+object that Cylinder creates for you before calling your handler. Your job is to modify it as needed and
+return it.</p>
 <p>For example, you might set:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">response.data</span></code> for the response body</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">response.status_code</span></code> for the HTTP status</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">response.headers[...]</span></code> for custom headers</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">response.content_type</span></code> for the content type</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">response.headers[...]</span></code> for custom headers</p></li>
 </ul>
 <p>If your handler also needs access to the incoming request, include a <code class="docutils literal notranslate"><span class="pre">request</span></code> parameter:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
@@ -375,11 +371,12 @@ Werkzeug exposes.</p>
 </section>
 <section id="the-parameters-on-main">
 <h3>The parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code><a class="headerlink" href="#the-parameters-on-main" title="Link to this heading"></a></h3>
-<p>Each page file is a normal Python module, and each handler is a normal Python function named <code class="docutils literal notranslate"><span class="pre">main()</span></code>.</p>
+<p>Each page file is a normal Python module, and each handler is a normal Python function named <code class="docutils literal notranslate"><span class="pre">main()</span></code>. You
+can define other helper functions of course, as with any Python module.</p>
 <p>Cylinder calls that function by importing the module and then passing in any supported parameters that your
-handler asks for. The only required parameter is <code class="docutils literal notranslate"><span class="pre">response</span></code>, but several others are available as well:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">abort</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
-    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Saying hello to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">user_agent</span><span class="p">)</span>
+handler asks for. The only required parameter is <code class="docutils literal notranslate"><span class="pre">response</span></code>, but a few others are available as well:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Saying hello to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">user_agent</span><span class="p">)</span>
     <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Hello </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">user_agent</span><span class="si">}</span><span class="s2">!&quot;</span>
     <span class="k">return</span> <span class="n">response</span>
 </pre></div>
@@ -392,29 +389,24 @@ object your handler should modify and return</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">request</span></code> — the
 <a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/wrappers/#werkzeug.wrappers.Request">Werkzeug Request</a>
 object for the current request</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code> — Cylinder’s logger for the current request</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger</span></code> — Cylinder’s logger for the current request</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">abort</span></code> — the
 <a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/exceptions/#simple-aborting">Werkzeug <code class="docutils literal notranslate"><span class="pre">abort()</span></code> function</a>,
 extended with support for redirect-style HTTP exceptions such as <code class="docutils literal notranslate"><span class="pre">301</span></code>, <code class="docutils literal notranslate"><span class="pre">302</span></code>, <code class="docutils literal notranslate"><span class="pre">303</span></code>, <code class="docutils literal notranslate"><span class="pre">307</span></code>, and <code class="docutils literal notranslate"><span class="pre">308</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">g</span></code> — a <a class="reference external" href="https://docs.python.org/3/library/types.html#types.SimpleNamespace">SimpleNamespace</a> that
-works like Flask’s <a class="reference external" href="https://flask.palletsprojects.com/en/stable/api/#flask.g"><code class="docutils literal notranslate"><span class="pre">g</span></code></a>: a request-scoped
-scratchpad for passing data between hooks, handlers, and error handlers</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">e</span></code> — the exception object, available only in exception handlers</p></li>
 </ul>
 <p>You do not need to declare parameters you are not using. Cylinder only passes the ones your <code class="docutils literal notranslate"><span class="pre">main()</span></code>
 function asks for.</p>
 <p>These are the built-in parameters provided by the framework.</p>
-<p><code class="docutils literal notranslate"><span class="pre">app_map()</span></code> can receive the same built-in framework parameters as page handlers, in any order:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">request</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">response</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">abort</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">g</span></code></p></li>
-</ul>
-<p>The most common form is <code class="docutils literal notranslate"><span class="pre">app_map(request)</span></code>, but you can include the others if you need them.</p>
-<p>You can also define your own extra parameters in <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>, which will be covered later. Before that, it
-helps to understand how <code class="docutils literal notranslate"><span class="pre">abort()</span></code> and exception handlers work.</p>
+<p><code class="docutils literal notranslate"><span class="pre">app_map()</span></code> can receive the same built-in framework parameters as page handlers, in any order.</p>
+<p>The most common form is <code class="docutils literal notranslate"><span class="pre">app_map(request)</span></code>, but you can include the others if you need them:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>You can also define your own extra parameters in <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>,
+<a class="reference internal" href="#extra-parameters-on-main">which are covered later</a>. Before that, it helps to understand how <code class="docutils literal notranslate"><span class="pre">abort()</span></code> and
+exception handlers work.</p>
 </section>
 <section id="raising-abort-exceptions">
 <h3>Raising <code class="docutils literal notranslate"><span class="pre">abort()</span></code> exceptions<a class="headerlink" href="#raising-abort-exceptions" title="Link to this heading"></a></h3>
@@ -423,23 +415,27 @@ helps to understand how <code class="docutils literal notranslate"><span class="
 works by raising an HTTP exception. If that exception is not handled by one of your own error handler
 files, Werkzeug will generate a default response for it.</p>
 <p>For example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
     <span class="n">abort</span><span class="p">(</span><span class="mi">400</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>A request to that page would return Werkzeug’s default <code class="docutils literal notranslate"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code> response, something like:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Bad Request
-The browser (or proxy) sent a request that this server could not understand.
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>Bad Request<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+    The browser (or proxy) sent a request that this server could not understand.
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
 </pre></div>
 </div>
 <p>You can also provide a custom description:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
     <span class="n">abort</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="s2">&quot;Something went wrong&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>That would produce a response more like:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Bad Request
-Something went wrong
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>Bad Request<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+    Something went wrong
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
 </pre></div>
 </div>
 <p>This is often good enough for simple HTML responses, but many applications need more control than that. For
@@ -471,7 +467,7 @@ pass it in through <code class="docutils literal notranslate"><span class="pre">
     <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
@@ -479,23 +475,16 @@ pass it in through <code class="docutils literal notranslate"><span class="pre">
 </div>
 <p>Once that is configured, calling <code class="docutils literal notranslate"><span class="pre">abort(507)</span></code> anywhere in your handlers will raise that exception.</p>
 <p>If you do not provide a custom <code class="docutils literal notranslate"><span class="pre">507</span></code> error handler, the response will use your exception’s defined name,
-description, and status code.</p>
+description, and status code to return a simple HTML page.</p>
 <p>If you do provide a matching error handler file such as <code class="docutils literal notranslate"><span class="pre">webapp1.507.py</span></code>, Cylinder will route the request
 through that handler and let you customize the response just like any other HTTP error.</p>
 </section>
 <section id="abort-redirects">
 <h3>abort() Redirects<a class="headerlink" href="#abort-redirects" title="Link to this heading"></a></h3>
 <p>Cylinder also supports redirects through <code class="docutils literal notranslate"><span class="pre">abort()</span></code>.</p>
-<p>The built-in redirect codes are:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">301</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">302</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">303</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">307</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">308</span></code></p></li>
-</ul>
+<p>The built-in redirect codes are <code class="docutils literal notranslate"><span class="pre">301</span></code>, <code class="docutils literal notranslate"><span class="pre">302</span></code>, <code class="docutils literal notranslate"><span class="pre">303</span></code>, <code class="docutils literal notranslate"><span class="pre">307</span></code> and <code class="docutils literal notranslate"><span class="pre">308</span></code></p>
 <p>The second argument to <code class="docutils literal notranslate"><span class="pre">abort()</span></code> is the redirect target, for example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">abort</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">):</span>
         <span class="n">abort</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span> <span class="s2">&quot;/login&quot;</span><span class="p">)</span>
 </pre></div>
@@ -529,9 +518,9 @@ raised. This can be useful for logging, debugging, auditing, or building structu
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
     <span class="n">tb_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Got a 400 error: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tb_str</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Got a 400 error: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tb_str</span><span class="p">)</span>
     <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;application/json; charset=UTF-8&quot;</span>
     <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
         <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;bad_request&quot;</span><span class="p">,</span>
@@ -569,7 +558,8 @@ subtree such as <code class="docutils literal notranslate"><span class="pre">/ap
 <h3>Handling uncaught exceptions<a class="headerlink" href="#handling-uncaught-exceptions" title="Link to this heading"></a></h3>
 <p>Uncaught exceptions are treated as <code class="docutils literal notranslate"><span class="pre">500</span> <span class="pre">Internal</span> <span class="pre">Server</span> <span class="pre">Error</span></code> responses.</p>
 <p>For that reason, you generally should not call <code class="docutils literal notranslate"><span class="pre">abort(500)</span></code> yourself. If you need to signal an expected
-failure, use the most specific status code that fits the situation, such as <code class="docutils literal notranslate"><span class="pre">501</span></code> or <code class="docutils literal notranslate"><span class="pre">503</span></code>.</p>
+failure, use the most specific status code that fits the situation, such as <code class="docutils literal notranslate"><span class="pre">501</span></code> or <code class="docutils literal notranslate"><span class="pre">503</span></code>, or a custom
+status code with <a class="reference internal" href="#abort-extra">abort_extra</a></p>
 <p>When an unhandled exception occurs, Cylinder routes it to your <code class="docutils literal notranslate"><span class="pre">500</span></code> error handler if one exists. In that
 handler, the <code class="docutils literal notranslate"><span class="pre">e</span></code> parameter will be a
 <a class="reference external" href="https://werkzeug.palletsprojects.com/en/stable/exceptions/#werkzeug.exceptions.InternalServerError">Werkzeug <code class="docutils literal notranslate"><span class="pre">InternalServerError</span></code></a>,
@@ -601,45 +591,16 @@ this handler returns the traceback as plain text:</p>
 <p>That can be useful while developing, but in production you would usually log the traceback and return a
 more generic response instead.</p>
 </section>
+</section>
 <section id="extra-parameters-on-main">
-<h3>Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code><a class="headerlink" href="#extra-parameters-on-main" title="Link to this heading"></a></h3>
-<p>In addition to the built-in parameters provided by the framework (<code class="docutils literal notranslate"><span class="pre">request</span></code>, <code class="docutils literal notranslate"><span class="pre">response</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, <code class="docutils literal notranslate"><span class="pre">abort</span></code>,
-<code class="docutils literal notranslate"><span class="pre">g</span></code>, and, in exception handlers, <code class="docutils literal notranslate"><span class="pre">e</span></code>), your handlers can also receive arbitrary extra parameters defined by
-your application.</p>
-<p>These extra parameters come from the third value returned by <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>. In the Quickstart example, that
-value was an empty dict:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{}</span>
-</pre></div>
-</div>
-<p>That third value is where you define any additional objects, helpers, or application resources you want
-Cylinder to make available to your page modules. Because those parameters are matched by name, naming them
-carefully is important.</p>
-<section id="choosing-names-for-extra-parameters">
-<h4>Choosing names for extra parameters<a class="headerlink" href="#choosing-names-for-extra-parameters" title="Link to this heading"></a></h4>
-<p>Extra parameters are matched by name, so it is important to choose names carefully.</p>
-<p>The built-in parameter names used by Cylinder are:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">request</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">response</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">abort</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">g</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">e</span></code></p></li>
-</ul>
-<p>You should not reuse those names in <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>.</p>
-<p>More generally, it is a good idea to avoid names that may be confusing or ambiguous inside your handlers,
-such as:</p>
-<ul class="simple">
-<li><p>names that conflict with Python built-ins</p></li>
-<li><p>names that conflict with modules you also import in the same file</p></li>
-<li><p>names that are too generic to make their purpose obvious</p></li>
-</ul>
-<p>For example, names like <code class="docutils literal notranslate"><span class="pre">json</span></code>, <code class="docutils literal notranslate"><span class="pre">db</span></code>, <code class="docutils literal notranslate"><span class="pre">config</span></code>, <code class="docutils literal notranslate"><span class="pre">logger</span></code>, <code class="docutils literal notranslate"><span class="pre">SessionLocal</span></code>, or <code class="docutils literal notranslate"><span class="pre">render_template</span></code> are usually
-clear. Names like <code class="docutils literal notranslate"><span class="pre">list</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">id</span></code>, or <code class="docutils literal notranslate"><span class="pre">file</span></code> are more likely to cause confusion.</p>
-<p>As a rule of thumb: use extra parameter names that are explicit, descriptive, and unlikely to collide with
-anything else in the handler module.</p>
-<p>For example, if you want to make Python’s <code class="docutils literal notranslate"><span class="pre">json</span></code> module available throughout the app, you can pass it
+<h2>Extra parameters on <code class="docutils literal notranslate"><span class="pre">main()</span></code><a class="headerlink" href="#extra-parameters-on-main" title="Link to this heading"></a></h2>
+<p>In addition to the built-in parameters provided by the framework (<code class="docutils literal notranslate"><span class="pre">request</span></code>, <code class="docutils literal notranslate"><span class="pre">response</span></code>, <code class="docutils literal notranslate"><span class="pre">logger</span></code>, <code class="docutils literal notranslate"><span class="pre">abort</span></code>,
+and, in exception handlers, <code class="docutils literal notranslate"><span class="pre">e</span></code>), your handlers can also receive arbitrary extra parameters defined by your
+application.</p>
+<p>These extra parameters come from an optional third value in the tuple returned by <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>.</p>
+<p>That third value is a dictionary where you define any additional objects, helpers, or application resources
+you want Cylinder to make available to your page modules.</p>
+<p>If, for example, you want to make Python’s <code class="docutils literal notranslate"><span class="pre">json</span></code> module available throughout the app, you can pass it
 through <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span>
@@ -688,7 +649,7 @@ through <code class="docutils literal notranslate"><span class="pre">app_map()</
 <li><p>helper modules</p></li>
 <li><p>aliases for built-in framework objects</p></li>
 </ul>
-<p>For example, if you prefer <code class="docutils literal notranslate"><span class="pre">logger</span></code> over <code class="docutils literal notranslate"><span class="pre">log</span></code>, you can provide that alias yourself:</p>
+<p>For example, if you prefer the shorter <code class="docutils literal notranslate"><span class="pre">log</span></code> over <code class="docutils literal notranslate"><span class="pre">logger</span></code>, you can provide that alias yourself:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span>
 
@@ -696,20 +657,20 @@ through <code class="docutils literal notranslate"><span class="pre">app_map()</
     <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
     <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;logger&quot;</span><span class="p">:</span> <span class="n">log</span><span class="p">}</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;log&quot;</span><span class="p">:</span> <span class="n">logger</span><span class="p">}</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Then your page modules can use <code class="docutils literal notranslate"><span class="pre">logger</span></code> as a parameter instead of <code class="docutils literal notranslate"><span class="pre">log</span></code>.</p>
+<p>Then your page modules can use <code class="docutils literal notranslate"><span class="pre">log</span></code> as a parameter instead of <code class="docutils literal notranslate"><span class="pre">logger</span></code>, and write <code class="docutils literal notranslate"><span class="pre">log.info()</span></code> instead of
+<code class="docutils literal notranslate"><span class="pre">logger.info()</span></code>.</p>
 <p>This is one of Cylinder’s main extension points: built-in request handling from the framework, plus
 application-specific dependencies passed in explicitly through <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>.</p>
 </section>
-</section>
 <section id="html-templates-and-jinja2">
-<h3>HTML templates and Jinja2<a class="headerlink" href="#html-templates-and-jinja2" title="Link to this heading"></a></h3>
+<h2>HTML templates and Jinja2<a class="headerlink" href="#html-templates-and-jinja2" title="Link to this heading"></a></h2>
 <p>Cylinder does not include a built-in template engine. Instead, template rendering is meant to be added the
 same way as any other application dependency: define it in <code class="docutils literal notranslate"><span class="pre">cylinder_main.py</span></code> and pass it in through
 <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>.</p>
@@ -772,72 +733,8 @@ same way as any other application dependency: define it in <code class="docutils
 <p>This approach keeps Cylinder template-engine agnostic while still making common tools like Jinja2 easy to
 integrate.</p>
 </section>
-</section>
-<section id="static-files">
-<h2>Static files<a class="headerlink" href="#static-files" title="Link to this heading"></a></h2>
-<p>Cylinder can also serve static files directly from the filesystem.</p>
-<p>For example:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-        |-- webapp1.500.py
-        |-- /webapp1
-            |-- example1.json
-            |-- foo.400.py
-            |-- /foo
-                |-- example2.css
-</pre></div>
-</div>
-<p>In this layout:</p>
-<ul class="simple">
-<li><p>a request to <code class="docutils literal notranslate"><span class="pre">/example1.json</span></code> returns the contents of <code class="docutils literal notranslate"><span class="pre">example1.json</span></code></p></li>
-<li><p>a request to <code class="docutils literal notranslate"><span class="pre">/foo/example2.css</span></code> returns the contents of <code class="docutils literal notranslate"><span class="pre">example2.css</span></code></p></li>
-</ul>
-<p>Cylinder sets the <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code> header based on the file extension using Python’s standard library
-<a class="reference external" href="https://docs.python.org/3/library/mimetypes.html"><code class="docutils literal notranslate"><span class="pre">mimetypes</span></code></a>. In the example above, the responses would
-use <code class="docutils literal notranslate"><span class="pre">application/json</span></code> and <code class="docutils literal notranslate"><span class="pre">text/css</span></code> respectively.</p>
-<p>Static files are served only when the URL path matches the file path exactly. Python source files are never
-served.</p>
-<p>Static file responses still pass through the normal hook system, so early hooks and late hooks can inspect
-or modify the response just as they can for page handlers.</p>
-</section>
-<section id="why-there-are-no-index-files">
-<h2>Why there are no index files<a class="headerlink" href="#why-there-are-no-index-files" title="Link to this heading"></a></h2>
-<p>Many web frameworks and file-based routers revolve around names like <code class="docutils literal notranslate"><span class="pre">index.html</span></code>, <code class="docutils literal notranslate"><span class="pre">index.php</span></code>, or
-<code class="docutils literal notranslate"><span class="pre">page.tsx</span></code>.</p>
-<p>Cylinder intentionally does not.</p>
-<p>One reason is readability. In larger projects, repeated index-style filenames tend to create “index soup”:
-you open several tabs in your editor and they all have the same name, even though they represent completely
-different routes.</p>
-<p>Cylinder avoids that by naming each handler after the final path segment it handles. That keeps route
-structure visible in the filesystem while also making files easier to recognize in an editor.</p>
-<p>For example, if you are working on <code class="docutils literal notranslate"><span class="pre">/api/v2/reports/company/payments</span></code>, the relevant handlers might look
-like this:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/cylinder_sites
-    |-- cylinder_main.py
-    |-- /my_webapps
-        |-- webapp1.ex.get.py
-        |-- /webapp1
-            |-- /API
-                |-- /v2
-                    |-- reports.ex.get.py
-                    |-- /reports
-                        |-- company.ex.get.py
-                        |-- /company
-                            |-- payments.ex.get.py
-</pre></div>
-</div>
-<p>In this example, only <code class="docutils literal notranslate"><span class="pre">GET</span></code> handlers are shown. If you also wanted to support
-<code class="docutils literal notranslate"><span class="pre">PUT</span> <span class="pre">/api/v2/reports/company/payments</span></code>, you could add <code class="docutils literal notranslate"><span class="pre">payments.ex.put.py</span></code> in the same directory, or use
-<code class="docutils literal notranslate"><span class="pre">payments.ex.default.py</span></code> if you want one file to handle multiple methods.</p>
-<p>The important thing to notice is that there is no <code class="docutils literal notranslate"><span class="pre">index.ex.get.py</span></code>, because there does not need to be.</p>
-<p>In Cylinder, a route segment can correspond to both a directory and a file. So even though
-<code class="docutils literal notranslate"><span class="pre">/reports/company</span></code> corresponds to a <code class="docutils literal notranslate"><span class="pre">company</span></code> directory inside <code class="docutils literal notranslate"><span class="pre">/reports</span></code>, it can also be handled by
-<code class="docutils literal notranslate"><span class="pre">company.ex.get.py</span></code> in that same location.</p>
-<p>This keeps filenames meaningful without giving up nested route structure.</p>
 <section id="using-database-connections-and-orms-like-sqlalchemy">
-<h3>Using database connections and ORMs like SQLAlchemy<a class="headerlink" href="#using-database-connections-and-orms-like-sqlalchemy" title="Link to this heading"></a></h3>
+<h2>Using database connections and ORMs like SQLAlchemy<a class="headerlink" href="#using-database-connections-and-orms-like-sqlalchemy" title="Link to this heading"></a></h2>
 <p>Database setup is often verbose enough that it makes sense to keep it in a separate module rather than
 inside <code class="docutils literal notranslate"><span class="pre">cylinder_main.py</span></code>.</p>
 <p>For example, with SQLAlchemy you might define your engine and session factory in <code class="docutils literal notranslate"><span class="pre">db.py</span></code>:</p>
@@ -882,44 +779,6 @@ the engine or session factory are usually better passed in through <code class="
 </div>
 <p>The important idea is that shared database objects are initialized once, then passed into handlers
 explicitly just like any other application dependency.</p>
-</section>
-</section>
-<section id="thread-safety">
-<h2>Thread safety<a class="headerlink" href="#thread-safety" title="Link to this heading"></a></h2>
-<p>Thread safety in Cylinder works the same way it does in any other WSGI application.</p>
-<p>Each request may be handled concurrently, depending on the server you are using. The examples in these docs
-use <a class="reference external" href="https://pypi.org/project/waitress/">Waitress</a>, which uses threads.</p>
-<p>If your application shares state between requests, and that state is not concurrency-safe on its own, you
-are responsible for protecting it with the appropriate synchronization primitive such as a lock.</p>
-<p>Cylinder makes that easy to do by passing shared objects in through <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>.</p>
-<p>For example, in <code class="docutils literal notranslate"><span class="pre">cylinder_main.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
-
-<span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
-    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;lock&quot;</span><span class="p">:</span> <span class="n">lock</span><span class="p">}</span>
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Now any page module in the app can ask for that lock as a parameter:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">lock</span><span class="p">):</span>
-    <span class="k">with</span> <span class="n">lock</span><span class="p">:</span>
-        <span class="c1"># do something that is not thread-safe</span>
-        <span class="k">pass</span>
-    <span class="k">return</span> <span class="n">response</span>
-</pre></div>
-</div>
-<p>This pattern is useful for protecting shared in-memory data structures, coordinating access to
-non-thread-safe resources, or wrapping code that must not run concurrently.</p>
 </section>
 <section id="sessions">
 <h2>Sessions<a class="headerlink" href="#sessions" title="Link to this heading"></a></h2>
@@ -993,9 +852,133 @@ to reason about but requires shared storage if the application runs on multiple 
 <p>In this example, session data is stored in SQLite and linked to the client through a <code class="docutils literal notranslate"><span class="pre">session_id</span></code> cookie.</p>
 <p>If the application later needs to scale beyond a single server, the same pattern can be reused with shared
 storage such as PostgreSQL, Redis, or another external system.</p>
-<p>You could also attach session state to <code class="docutils literal notranslate"><span class="pre">g</span></code> from an early hook instead of passing it directly from
-<code class="docutils literal notranslate"><span class="pre">app_map()</span></code>. That can be useful if different parts of the site need different cookie or authentication
-behavior, such as a browser-facing site and a separate <code class="docutils literal notranslate"><span class="pre">/api</span></code> subtree.</p>
+<p>You could also, for example, attach session state to [g]{#the-g-object} from an early hook instead of
+passing it directly from <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>. That can be useful if different parts of the site need different
+cookie or authentication behavior, such as a browser-facing site and a separate <code class="docutils literal notranslate"><span class="pre">/api</span></code> subtree.</p>
+</section>
+<section id="the-g-object">
+<h2>The <code class="docutils literal notranslate"><span class="pre">g</span></code> object<a class="headerlink" href="#the-g-object" title="Link to this heading"></a></h2>
+<p>Users coming from Flask may be familiar with the
+<a class="reference external" href="https://flask.palletsprojects.com/en/stable/appcontext/#storing-data">Flask <code class="docutils literal notranslate"><span class="pre">g</span></code> object</a>. Cylinder does not
+implement the <code class="docutils literal notranslate"><span class="pre">g</span></code> object for you because Cylinder’s architecture makes it trivial to do so yourself.</p>
+<p>You can create the <code class="docutils literal notranslate"><span class="pre">g</span></code> object like so:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
+    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">()}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="thread-safety">
+<h2>Thread safety<a class="headerlink" href="#thread-safety" title="Link to this heading"></a></h2>
+<p>Thread safety in Cylinder works the same way it does in any other WSGI application.</p>
+<p>Each request may be handled concurrently, depending on the server you are using. The examples in these docs
+use <a class="reference external" href="https://pypi.org/project/waitress/">Waitress</a>, which uses multi-threading. Other servers may use
+multi-processing.</p>
+<p>If your application shares state between requests, and that state is not concurrency-safe on its own, you
+are responsible for protecting it with the appropriate synchronization primitive such as a lock.</p>
+<p>Cylinder makes that easy to do by passing shared objects in through <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>.</p>
+<p>For example, in <code class="docutils literal notranslate"><span class="pre">cylinder_main.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">waitress</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+
+<span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
+    <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;lock&quot;</span><span class="p">:</span> <span class="n">lock</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now any page module in the app can ask for that lock as a parameter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">lock</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">lock</span><span class="p">:</span>
+        <span class="c1"># do something that is not thread-safe</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>This pattern is useful for protecting shared in-memory data structures, coordinating access to
+non-thread-safe resources, or wrapping code that must not run concurrently.</p>
+</section>
+<section id="static-files">
+<h2>Static files<a class="headerlink" href="#static-files" title="Link to this heading"></a></h2>
+<p>Cylinder can also serve static files directly from the filesystem.</p>
+<p>For example:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- webapp1.500.py
+        |-- /webapp1
+            |-- example1.json
+            |-- foo.400.py
+            |-- /foo
+                |-- example2.css
+</pre></div>
+</div>
+<p>In this layout:</p>
+<ul class="simple">
+<li><p>a request to <code class="docutils literal notranslate"><span class="pre">/example1.json</span></code> returns the contents of <code class="docutils literal notranslate"><span class="pre">example1.json</span></code></p></li>
+<li><p>a request to <code class="docutils literal notranslate"><span class="pre">/foo/example2.css</span></code> returns the contents of <code class="docutils literal notranslate"><span class="pre">example2.css</span></code></p></li>
+</ul>
+<p>Cylinder sets the <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code> header based on the file extension using Python’s standard library
+<a class="reference external" href="https://docs.python.org/3/library/mimetypes.html"><code class="docutils literal notranslate"><span class="pre">mimetypes</span></code></a>. In the example above, the responses would
+use <code class="docutils literal notranslate"><span class="pre">application/json</span></code> and <code class="docutils literal notranslate"><span class="pre">text/css</span></code> respectively.</p>
+<p>Static files are served only when the URL path matches the file path exactly. Python source files are never
+served.</p>
+<p>Static file responses still pass through the normal hook system, so early hooks and late hooks can inspect
+or modify the response just as they can for page handlers.</p>
+</section>
+<section id="why-there-are-no-index-files">
+<h2>Why there are no index files<a class="headerlink" href="#why-there-are-no-index-files" title="Link to this heading"></a></h2>
+<p>Many web frameworks and file-based routers revolve around names like <code class="docutils literal notranslate"><span class="pre">index.html</span></code>, <code class="docutils literal notranslate"><span class="pre">index.php</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">page.tsx</span></code>.</p>
+<p>Cylinder intentionally does not.</p>
+<p>One reason is readability. In larger projects, repeated index-style filenames tend to create “index soup”:
+you open several tabs in your editor and they all have the same name, even though they represent completely
+different routes.</p>
+<p>Cylinder avoids that by naming each handler after the final path segment it handles. That keeps route
+structure visible in the filesystem while also making files easier to recognize in an editor.</p>
+<p>For example, if you are working on <code class="docutils literal notranslate"><span class="pre">/api/v2/reports/company/payments</span></code>, the relevant handlers might look
+like this:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/cylinder_sites
+    |-- cylinder_main.py
+    |-- /my_webapps
+        |-- webapp1.ex.get.py
+        |-- /webapp1
+            |-- /API
+                |-- /v2
+                    |-- reports.ex.get.py
+                    |-- /reports
+                        |-- company.ex.get.py
+                        |-- /company
+                            |-- payments.ex.get.py
+</pre></div>
+</div>
+<p>In this example, only <code class="docutils literal notranslate"><span class="pre">GET</span></code> handlers are shown. If you also wanted to support
+<code class="docutils literal notranslate"><span class="pre">PUT</span> <span class="pre">/api/v2/reports/company/payments</span></code>, you could add <code class="docutils literal notranslate"><span class="pre">payments.ex.put.py</span></code> in the same directory, or use
+<code class="docutils literal notranslate"><span class="pre">payments.ex.default.py</span></code> if you want one file to handle multiple methods.</p>
+<p>The important thing to notice is that there is no <code class="docutils literal notranslate"><span class="pre">index.ex.get.py</span></code>, because there does not need to be.</p>
+<p>In Cylinder, a route segment can correspond to both a directory and a file. So even though
+<code class="docutils literal notranslate"><span class="pre">/reports/company</span></code> corresponds to a <code class="docutils literal notranslate"><span class="pre">company</span></code> directory inside <code class="docutils literal notranslate"><span class="pre">/reports</span></code>, it can also be handled by
+<code class="docutils literal notranslate"><span class="pre">company.ex.get.py</span></code> in that same location.</p>
+<p>This keeps filenames meaningful without giving up nested route structure.</p>
 </section>
 <section id="dynamic-paths-dynamic-route-handling">
 <h2>Dynamic paths / dynamic route handling<a class="headerlink" href="#dynamic-paths-dynamic-route-handling" title="Link to this heading"></a></h2>
@@ -1055,7 +1038,7 @@ directly and interpret any remaining segments however your application needs.</p
                     |-- users.ex.get.py
 </pre></div>
 </div>
-<p>a request to <code class="docutils literal notranslate"><span class="pre">/API/v1/users</span></code> and a request to <code class="docutils literal notranslate"><span class="pre">/API/v1/users/123</span></code> would both be handled by
+<p>a <code class="docutils literal notranslate"><span class="pre">GET</span></code> request to <code class="docutils literal notranslate"><span class="pre">/API/v1/users</span></code> and a request to <code class="docutils literal notranslate"><span class="pre">/API/v1/users/123</span></code> would both be handled by
 <code class="docutils literal notranslate"><span class="pre">users.ex.get.py</span></code>.</p>
 <p>Inside that handler, you can examine <code class="docutils literal notranslate"><span class="pre">request.path</span></code> and parse the remainder yourself:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
@@ -1119,13 +1102,13 @@ extensions.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">v2.lh.get.py</span></code> is a late hook for requests under <code class="docutils literal notranslate"><span class="pre">/API/v2/*</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">reports.eh.get.py</span></code> is an early hook for requests under <code class="docutils literal notranslate"><span class="pre">/API/v2/reports/*</span></code></p></li>
 </ul>
-<p>So a request to <code class="docutils literal notranslate"><span class="pre">/API/v2/reports/company/*</span></code> would flow like this after <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>:</p>
+<p>So a <code class="docutils literal notranslate"><span class="pre">GET</span></code> request to <code class="docutils literal notranslate"><span class="pre">/API/v2/reports/company/*</span></code> would flow like this after <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">main()</span></code> in <code class="docutils literal notranslate"><span class="pre">reports.eh.get.py</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">main()</span></code> in <code class="docutils literal notranslate"><span class="pre">company.ex.get.py</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">main()</span></code> in <code class="docutils literal notranslate"><span class="pre">v2.lh.get.py</span></code></p></li>
 </ol>
-<p>A request to <code class="docutils literal notranslate"><span class="pre">/API/v2/users</span></code> would flow like this instead:</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">GET</span></code> request to <code class="docutils literal notranslate"><span class="pre">/API/v2/users</span></code> would flow like this instead:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">main()</span></code> in <code class="docutils literal notranslate"><span class="pre">users.ex.get.py</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">main()</span></code> in <code class="docutils literal notranslate"><span class="pre">v2.lh.get.py</span></code></p></li>
@@ -1152,9 +1135,8 @@ late hook.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_app</span><span class="p">(</span>
     <span class="n">app_map</span><span class="p">,</span>
     <span class="n">log_level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
-    <span class="n">log_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">request_id_header</span><span class="o">=</span><span class="s2">&quot;X-Request-ID&quot;</span><span class="p">,</span>
-    <span class="n">log_queue_length</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">log_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># defaults to internal stream handler to stderr</span>
+    <span class="n">request_id_header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># should usually be set to &quot;X-Request-ID&quot;</span>
     <span class="n">abort_extra</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 </pre></div>
@@ -1173,9 +1155,9 @@ configuration flexible and close to the code it affects.</p>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">host</span> <span class="o">==</span> <span class="s2">&quot;foo.com&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;foo&quot;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span><span class="p">,</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
@@ -1244,11 +1226,11 @@ Cylinder exposes a
 <span class="kn">import</span><span class="w"> </span><span class="nn">cylinder</span>
 
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">webapp1_app</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">webapp1_app</span><span class="p">(</span><span class="n">caplog</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span>
 
-    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">)</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_map</span><span class="p">,</span> <span class="n">log_handler</span><span class="o">=</span><span class="n">caplog</span><span class="o">.</span><span class="n">handler</span><span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">wait_for_logs</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># wait for the log queue to drain before returning</span>
 
     <span class="c1"># other setup can go here</span>
@@ -1256,25 +1238,23 @@ Cylinder exposes a
     <span class="k">yield</span> <span class="n">app</span>
 
     <span class="c1"># cleanup or reset logic can go here</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">webapp1_client</span><span class="p">(</span><span class="n">webapp1_app</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">webapp1_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span>
+
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">webapp1_test.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_root</span><span class="p">(</span><span class="n">webapp1_client</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_root</span><span class="p">(</span><span class="n">webapp1_app</span><span class="p">,</span> <span class="n">caplog</span><span class="p">):</span>
+    <span class="n">webapp1_client</span> <span class="o">=</span> <span class="n">webapp1_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span>
+
     <span class="n">response</span> <span class="o">=</span> <span class="n">webapp1_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+
     <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
     <span class="k">assert</span> <span class="sa">b</span><span class="s2">&quot;Hello World!&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">data</span>
-</pre></div>
-</div>
-<p>If your application sets headers, cookies, or other response metadata, you can assert against those in the
-same way:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_cors_header</span><span class="p">(</span><span class="n">webapp1_client</span><span class="p">):</span>
-    <span class="n">response</span> <span class="o">=</span> <span class="n">webapp1_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Access-Control-Allow-Origin&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;*&quot;</span>
+
+    <span class="n">webapp1_app</span><span class="o">.</span><span class="n">log_queue</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">assert</span> <span class="s1">&#39;my custom log message&#39;</span> <span class="ow">in</span> <span class="n">caplog</span><span class="o">.</span><span class="n">text</span>
+
 </pre></div>
 </div>
 <p>This makes it easy to test Cylinder apps using the same request/response patterns you would use in
@@ -1293,7 +1273,7 @@ process when your route logic changes.</p>
 environment, or otherwise initializes an object once and then passes that object through <code class="docutils literal notranslate"><span class="pre">app_map()</span></code>, that
 object will remain cached for the life of the process. Changes to that code will not take effect until the
 application is restarted.</p>
-<p>For example:</p>
+<p>In summary:</p>
 <ul class="simple">
 <li><p>changes to page handlers, hooks, and error handlers are picked up dynamically</p></li>
 <li><p>changes to <code class="docutils literal notranslate"><span class="pre">cylinder_main.py</span></code> require a restart</p></li>
@@ -1320,7 +1300,7 @@ behaves like normal long-lived Python process state.</p>
     <span class="n">waitress</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">app_map</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span><span class="p">,</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="s2">&quot;my_webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;webapp1&quot;</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
@@ -1335,23 +1315,20 @@ behaves like normal long-lived Python process state.</p>
 <code class="docutils literal notranslate"><span class="pre">logging.DEBUG</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">log_handler</span></code> — controls where log records are written. By default, Cylinder creates a
 <code class="docutils literal notranslate"><span class="pre">logging.StreamHandler(sys.stderr)</span></code>. You can pass your own handler instead, such as a file handler, an
-SMTP handler, or <code class="docutils literal notranslate"><span class="pre">logging.NullHandler</span></code> if you want to silence logs.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">log_queue_length</span></code> — controls the length of the internal logging queue.</p></li>
+SMTP handler, the <a class="reference internal" href="#testing">pytest caplog handler</a>, or <code class="docutils literal notranslate"><span class="pre">logging.NullHandler</span></code> if you want to silence
+logs.</p></li>
 </ul>
 <p>Cylinder uses a queue for logging so that request handling does not have to wait on the log handler before
 returning a response. This is especially useful when the handler is slow, such as
 <a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#smtphandler"><code class="docutils literal notranslate"><span class="pre">SMTPHandler</span></code></a>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">log_queue_length</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">1000</span></code>. Once the queue is full, new log messages will be dropped.</p>
-<p>If you set <code class="docutils literal notranslate"><span class="pre">log_queue_length=0</span></code>, Cylinder will stop dropping log messages, but the queue may grow without
-bound and consume large amounts of memory under load.</p>
 </section>
 <section id="request-id-header">
 <h2>request_id_header<a class="headerlink" href="#request-id-header" title="Link to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">request_id_header</span></code> is an optional argument to <code class="docutils literal notranslate"><span class="pre">get_app()</span></code> that specifies which incoming HTTP header should
 be used as the request ID.</p>
-<p>It defaults to <code class="docutils literal notranslate"><span class="pre">X-Request-ID</span></code>. If your proxy or CDN uses a different header, you can override it. For
-example, Cloudflare commonly uses <code class="docutils literal notranslate"><span class="pre">Cf-Ray</span></code>.</p>
-<p>If the configured header is missing, Cylinder generates a request ID automatically.</p>
+<p>It defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>. If your proxy or CDN provides a header, you should set it. For example, Cloudflare
+commonly uses <code class="docutils literal notranslate"><span class="pre">Cf-Ray</span></code>, while the rest of the world uses <code class="docutils literal notranslate"><span class="pre">X-Request-ID</span></code>.</p>
+<p>If left unconfigured, or the configured header is missing, Cylinder generates a request ID automatically.</p>
 <p>The request ID is included in log records so that all log entries for a single request can be correlated
 easily.</p>
 </section>
@@ -1368,16 +1345,16 @@ known in advance.</p>
 <p>For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
     <span class="k">del</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Length&quot;</span><span class="p">]</span>
-    <span class="n">response</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">fibonacci</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">fibonacci</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">response</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">fibonacci</span><span class="p">(</span><span class="n">log</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fibonacci</span><span class="p">(</span><span class="n">logger</span><span class="p">):</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;yielding: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;yielding: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
 </pre></div>
@@ -1395,7 +1372,7 @@ body is sent progressively as data is yielded.</p>
 request body into memory.</p>
 <p>The underlying Werkzeug request exposes the incoming data as a file-like stream via <code class="docutils literal notranslate"><span class="pre">request.stream</span></code>.</p>
 <p>For example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
     <span class="n">total_bytes</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -1404,7 +1381,7 @@ request body into memory.</p>
             <span class="k">break</span>
 
         <span class="n">total_bytes</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;received </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;received </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
 
     <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;received </span><span class="si">{</span><span class="n">total_bytes</span><span class="si">}</span><span class="s2"> bytes&quot;</span>
     <span class="k">return</span> <span class="n">response</span>
@@ -1438,43 +1415,6 @@ will read and buffer the full request body for you. To keep streaming behavior, 
 </div>
 <p>This allows your editor to understand what <code class="docutils literal notranslate"><span class="pre">request</span></code> and <code class="docutils literal notranslate"><span class="pre">response</span></code> are, so attributes like <code class="docutils literal notranslate"><span class="pre">request.args</span></code>,
 <code class="docutils literal notranslate"><span class="pre">request.cookies</span></code>, or <code class="docutils literal notranslate"><span class="pre">response.headers</span></code> will autocomplete correctly.</p>
-<section id="typing-other-parameters">
-<h3>Typing other parameters<a class="headerlink" href="#typing-other-parameters" title="Link to this heading"></a></h3>
-<p>You can also add type hints for other built-in parameters:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
-    <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
-    <span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span>
-    <span class="n">log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
-    <span class="n">g</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;path: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">g</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mi">123</span>
-    <span class="k">return</span> <span class="n">response</span>
-</pre></div>
-</div>
-<p>For exception handlers, you can type the <code class="docutils literal notranslate"><span class="pre">e</span></code> parameter:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTTPException</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="n">HTTPException</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">response</span>
-</pre></div>
-</div>
-<p>Or in the case of the 500 handler (see: <a class="reference internal" href="#handling-uncaught-exceptions">Handling uncaught exceptions</a>):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InternalServerError</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="n">InternalServerError</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">response</span>
-</pre></div>
-</div>
-<p>Type hints are optional, but recommended. They do not change how Cylinder works, but they help your editor
-understand your code, which makes development faster and reduces mistakes.</p>
-</section>
 </section>
 <section id="safeguards">
 <h2>Safeguards<a class="headerlink" href="#safeguards" title="Link to this heading"></a></h2>
@@ -1501,6 +1441,14 @@ before the main page handler gets a chance to use it.</p>
 <p>If you need to inspect the request body, do that in the page handler instead.</p>
 <p>Access to metadata such as headers, cookies, query parameters, method, host, and path is still fine in
 <code class="docutils literal notranslate"><span class="pre">app_map()</span></code> and early hooks.</p>
+<p>If you find yourself in a situation where you <em>need</em> to consume the request body early, you can still do so
+by setting <code class="docutils literal notranslate"><span class="pre">shallow</span></code> to <code class="docutils literal notranslate"><span class="pre">False</span></code> on the request object:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">shallow</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
 </section>
 <section id="handlers-must-return-the-same-response-object">
 <h3>Handlers must return the same response object<a class="headerlink" href="#handlers-must-return-the-same-response-object" title="Link to this heading"></a></h3>
