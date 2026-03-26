@@ -364,15 +364,20 @@ class DirectFileServe:
     def main(response):
         direct_path = global_proxy.search_paths[0]
         mimetype, content_encoding = mimetypes.guess_type(direct_path, strict=False)
-
-        if content_encoding:
-            response.content_encoding = content_encoding
-
+        response.content_encoding = content_encoding or "identity"
         response.mimetype = mimetype or "application/octet-stream"
-
-        with open(direct_path, "rb") as f:
-            response.data = f.read()
+        response.headers["Content-Length"] = os.path.getsize(direct_path)
+        response.response = read_file_in_chunks(direct_path)
         return response
+
+
+def read_file_in_chunks(file_path, chunk_size=16384):
+    with open(file_path, "rb") as f:
+        while True:
+            data = f.read(chunk_size)
+            if not data:
+                break
+            yield data
 
 
 class CustomQueueHandler(logging.handlers.QueueHandler):
